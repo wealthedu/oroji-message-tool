@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>오로지교육 · 고객 관리 메시지</title>
+<style>html,body{margin:0;padding:0;background:#f4f2fd;-webkit-text-size-adjust:100%}</style>
+<script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<!-- ============================================================
+  오로지교육 · 고객 접촉 문자함 (MVP v5)
+  - 카테고리별 멘트 12개 + 안부에 쾌유(입원/수술/치료) 메시지
+  - 예쁜 이미지 카드 생성 → 카톡(공유시트) 전송 / 이미지 저장
+  - 사용자가 멘트 수정·추가·삭제 가능 (브라우저 저장)
+  아임웹 [코드 삽입] 블록에 통째로 붙여넣어 사용하세요.
+  멘트 추가/수정은 아래 OROJI_TEMPLATES 배열을 고치거나, 화면에서 직접 편집하세요.
+============================================================ -->
+<div id="oroji-msg-app">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap');
+    #oroji-msg-app *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    #oroji-msg-app{
+      --bg:#f4f2fd; --card:#ffffff; --line:#ebe7f7; --text:#3a3340; --sub:#9d96b4;
+      --brand:#8b7cf6; --brand-2:#b89bff; --brand-deep:#6d5be0; --brand-soft:#f1ecff;
+      --calm:#a79df0; --gold:#ffb020; --ok:#2bb673;
+      font-family:'Pretendard',-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+      color:var(--text); background:var(--bg); max-width:480px; margin:0 auto;
+      padding:0 0 44px; line-height:1.5; -webkit-text-size-adjust:100%;
+    }
+    #oroji-msg-app .wrap{padding:0 15px}
+
+    /* 히어로 */
+    #oroji-msg-app .hero{background:
+        radial-gradient(135% 95% at 84% 72%, rgba(178,152,255,.55) 0%, rgba(178,152,255,0) 52%),
+        radial-gradient(120% 85% at 8% 2%, rgba(124,99,235,.45) 0%, rgba(124,99,235,0) 50%),
+        linear-gradient(158deg,#6a4ee0 0%,#5836cf 44%,#3f23a8 100%);
+      padding:30px 20px 26px;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
+    #oroji-msg-app .hero::after{content:"";position:absolute;right:-40px;top:24px;width:210px;height:210px;background:radial-gradient(circle,rgba(193,168,255,.38) 0%,rgba(193,168,255,0) 70%);border-radius:50%}
+    #oroji-msg-app .hero::before{content:"";position:absolute;left:-34px;bottom:-44px;width:160px;height:160px;background:radial-gradient(circle,rgba(255,255,255,.10) 0%,rgba(255,255,255,0) 70%);border-radius:50%}
+    #oroji-msg-app .hero .kicker{font-size:12px;font-weight:700;color:rgba(255,255,255,.92);letter-spacing:.3px;position:relative;z-index:1}
+    #oroji-msg-app .brand-logo{height:26px;width:auto;display:block;position:relative;z-index:2;margin:0 0 22px 0}
+    #oroji-msg-app .wordmark{font-size:20px;font-weight:800;color:#fff;letter-spacing:1px;position:relative;z-index:2;margin:0 0 22px 0}
+    #oroji-msg-app .hero h1{font-size:23px;font-weight:800;letter-spacing:-.5px;margin-top:4px;color:#fff;position:relative;z-index:1}
+    #oroji-msg-app .hero p{font-size:13px;color:rgba(255,255,255,.92);margin-top:5px;position:relative;z-index:1}
+
+    /* 이름 카드 */
+    #oroji-msg-app .names{display:flex;gap:10px;background:var(--card);border-radius:18px;padding:15px;
+      margin:22px 15px 0;box-shadow:0 6px 20px rgba(139,124,246,.14);border:1px solid var(--line)}
+    #oroji-msg-app .names .fld{flex:1;background:#f6f4fd;border-radius:13px;padding:11px 14px;border:1px solid transparent;transition:.15s}
+    #oroji-msg-app .names .fld:focus-within{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px rgba(139,124,246,.12)}
+    #oroji-msg-app .names label{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--sub);font-weight:700;margin-bottom:2px}
+    #oroji-msg-app .names input{width:100%;border:0;outline:0;font-size:15px;background:transparent;color:var(--text);font-weight:600;font-family:inherit}
+    #oroji-msg-app .names input::placeholder{color:#cdc6de;font-weight:500}
+    #oroji-msg-app .hint{font-size:11.5px;color:var(--sub);margin:7px 18px 0}
+
+    /* 검색 */
+    #oroji-msg-app .search{position:relative;margin:14px 0 14px}
+    #oroji-msg-app .search input{width:100%;border:1px solid var(--line);background:var(--card);border-radius:14px;
+      padding:12px 16px 12px 42px;font-size:15px;outline:0;color:var(--text);font-family:inherit;box-shadow:0 3px 10px rgba(139,124,246,.08);transition:.15s}
+    #oroji-msg-app .search input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(139,124,246,.12)}
+    #oroji-msg-app .search input::placeholder{color:#c2bcd4}
+    #oroji-msg-app .search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);opacity:.4}
+
+    /* 카테고리 버튼 */
+    #oroji-msg-app .chips{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;margin-bottom:10px;-ms-overflow-style:none;scrollbar-width:none}
+    #oroji-msg-app .chips::-webkit-scrollbar{display:none}
+    #oroji-msg-app .chip{flex:0 0 auto;border:1px solid var(--line);background:var(--card);color:#8a7f9f;
+      font-size:13.5px;font-weight:700;padding:9px 15px;border-radius:999px;cursor:pointer;transition:.15s;white-space:nowrap;font-family:inherit;box-shadow:0 2px 6px rgba(139,124,246,.07)}
+    #oroji-msg-app .chip:active{transform:scale(.96)}
+    #oroji-msg-app .chip.on{background:linear-gradient(135deg,var(--brand),var(--brand-2));border-color:transparent;color:#fff;box-shadow:0 5px 14px rgba(139,124,246,.34)}
+
+    /* 상단 액션바 */
+    #oroji-msg-app .bar{display:flex;align-items:center;justify-content:space-between;margin:0 4px 11px}
+    #oroji-msg-app .count{font-size:12.5px;color:var(--sub);font-weight:600}
+    #oroji-msg-app .count b{color:var(--brand-deep);font-weight:800}
+    #oroji-msg-app .addbtn{border:1px dashed #c9bff2;background:#faf8ff;color:var(--brand-deep);font-family:inherit;
+      font-size:12px;font-weight:700;padding:7px 12px;border-radius:10px;cursor:pointer;transition:.15s}
+    #oroji-msg-app .addbtn:active{transform:scale(.96)}
+
+    /* 메인: 카테고리별 가로 줄 */
+    #oroji-msg-app .home{display:block}
+    #oroji-msg-app .section{margin-bottom:20px}
+    #oroji-msg-app .rowhead{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}
+    #oroji-msg-app .rowhead .rt{font-size:14.5px;font-weight:800;color:#3a3340;display:flex;align-items:center;gap:6px}
+    #oroji-msg-app .rowhead .more{font-size:12px;color:var(--brand-deep);font-weight:700;background:none;border:0;cursor:pointer;font-family:inherit;padding:4px 2px;display:flex;align-items:center;gap:2px}
+    #oroji-msg-app .hrow{display:flex;gap:11px;overflow-x:auto;padding:2px 2px 9px;-ms-overflow-style:none;scrollbar-width:none;scroll-snap-type:x mandatory}
+    #oroji-msg-app .hrow::-webkit-scrollbar{display:none}
+    #oroji-msg-app .hrow .card{flex:0 0 210px;scroll-snap-align:start}
+
+    /* 카드 그리드(2열) */
+    #oroji-msg-app .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+    #oroji-msg-app .card{border-radius:18px;padding:13px 13px 12px;border:1.5px solid rgba(109,91,224,.06);
+      box-shadow:0 5px 16px rgba(139,124,246,.12);display:flex;flex-direction:column;transition:.15s}
+    #oroji-msg-app .card .top{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+    #oroji-msg-app .tag{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;letter-spacing:.2px}
+    #oroji-msg-app .mine{font-size:9px;font-weight:800;color:#fff;background:#b6a8e8;padding:2px 6px;border-radius:6px;margin-left:3px}
+    #oroji-msg-app .star{margin-left:auto;cursor:pointer;font-size:17px;line-height:1;color:#cdbfd6;user-select:none;transition:.15s}
+    #oroji-msg-app .star:active{transform:scale(1.25)}
+    #oroji-msg-app .star.on{color:var(--gold)}
+    #oroji-msg-app .body{font-size:12.7px;white-space:pre-wrap;word-break:keep-all;overflow-wrap:break-word;color:#5b5263;line-height:1.6;flex:1}
+    #oroji-msg-app .body b{color:var(--brand-deep);font-weight:800}
+
+    /* 액션 */
+    #oroji-msg-app .acts{margin-top:11px;display:flex;flex-direction:column;gap:6px}
+    #oroji-msg-app .btn-main{width:100%;border:0;border-radius:11px;background:var(--calm);color:#fff;
+      font-size:12.5px;font-weight:700;padding:10px;cursor:pointer;transition:.15s;font-family:inherit;
+      display:flex;align-items:center;justify-content:center;gap:6px}
+    #oroji-msg-app .btn-main:active{transform:scale(.97);background:#9489e6}
+    #oroji-msg-app .btn-main svg{width:18px;height:18px;flex:0 0 auto;border-radius:5px}
+    #oroji-msg-app .subrow{display:flex;gap:6px}
+    #oroji-msg-app .btn-ghost{flex:1;background:rgba(255,255,255,.7);border:1px solid rgba(109,91,224,.12);color:#7d7390;
+      border-radius:9px;padding:7px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+    #oroji-msg-app .btn-ghost:active{transform:scale(.96)}
+    #oroji-msg-app .btn-ghost.done{background:#dff5ea;border-color:#bfe9d4;color:#1f9d61}
+
+    /* 편집 폼 */
+    #oroji-msg-app .edit textarea{width:100%;min-height:120px;border:1px solid #d6cdf2;border-radius:12px;padding:10px;
+      font-size:13px;font-family:inherit;color:var(--text);line-height:1.55;outline:0;resize:vertical;background:#fff}
+    #oroji-msg-app .edit textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(139,124,246,.12)}
+    #oroji-msg-app .vars{display:flex;gap:5px;margin:7px 0}
+    #oroji-msg-app .vars button{flex:1;background:#f1ecff;border:0;color:var(--brand-deep);border-radius:8px;padding:6px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+    #oroji-msg-app .erow{display:flex;gap:6px;margin-top:6px}
+    #oroji-msg-app .erow button{flex:1;border:0;border-radius:9px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+    #oroji-msg-app .erow .save{background:var(--brand);color:#fff}
+    #oroji-msg-app .erow .cancel{background:#efecf6;color:#7d7390}
+    #oroji-msg-app .erow .reset{background:#fff3e0;color:#d98a1a}
+    #oroji-msg-app .erow .del{background:#ffe9ec;color:#e0556b}
+    #oroji-msg-app .ehint{font-size:10.5px;color:var(--sub);margin-top:5px;line-height:1.5}
+
+    #oroji-msg-app .empty{grid-column:1/-1;text-align:center;color:var(--sub);font-size:14px;padding:46px 20px;line-height:1.7}
+    #oroji-msg-app .empty .emoji{font-size:34px;display:block;margin-bottom:10px}
+
+    /* 토스트 */
+    #oroji-msg-app .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%) translateY(20px);background:#4a3f55;color:#fff;
+      font-size:14px;font-weight:700;padding:13px 22px;border-radius:999px;opacity:0;pointer-events:none;
+      transition:.28s cubic-bezier(.2,.8,.2,1);z-index:99999;box-shadow:0 10px 30px rgba(74,63,85,.32);display:flex;align-items:center;gap:8px;max-width:88%;text-align:center}
+    #oroji-msg-app .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+    /* 이미지 미리보기 모달 */
+    #oroji-msg-app .modal{position:fixed;inset:0;background:rgba(40,33,58,.55);backdrop-filter:blur(3px);
+      display:none;align-items:center;justify-content:center;z-index:99998;padding:20px}
+    #oroji-msg-app .modal.show{display:flex}
+    #oroji-msg-app .sheet{background:var(--line);border-radius:22px;padding:16px;width:100%;max-width:360px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+    #oroji-msg-app .sheet h3{font-size:15px;font-weight:800;text-align:center;margin-bottom:12px;color:var(--text)}
+    #oroji-msg-app .sheet img{width:100%;border-radius:14px;display:block;box-shadow:0 6px 18px rgba(139,124,246,.2)}
+    #oroji-msg-app .mbtns{display:flex;gap:8px;margin-top:14px}
+    #oroji-msg-app .mbtns button{flex:1;border:0;border-radius:12px;padding:12px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s}
+    #oroji-msg-app .mbtns .send{background:#fee500;color:#3a1d1d;box-shadow:0 6px 16px rgba(254,229,0,.4);display:flex;align-items:center;justify-content:center;gap:6px}
+    #oroji-msg-app .mbtns .send svg{width:19px;height:19px}
+    #oroji-msg-app .mbtns .down{background:#f1ecff;color:var(--brand-deep)}
+    #oroji-msg-app .mbtns button:active{transform:scale(.97)}
+    #oroji-msg-app .mclose{margin-top:9px;width:100%;background:none;border:0;color:var(--sub);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;padding:6px}
+
+    /* 애니메이션 / 인터랙션 */
+    @keyframes oroji-cardin{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+    #oroji-msg-app .card.anim{animation:oroji-cardin .34s cubic-bezier(.2,.8,.2,1) both}
+    @media (hover:hover){
+      #oroji-msg-app .card{transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
+      #oroji-msg-app .card:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(139,124,246,.2)}
+      #oroji-msg-app .chip:hover{border-color:var(--brand-2)}
+    }
+    @keyframes oroji-pop{0%{transform:scale(1)}40%{transform:scale(1.5)}70%{transform:scale(.82)}100%{transform:scale(1)}}
+    #oroji-msg-app .star.pop{animation:oroji-pop .42s cubic-bezier(.2,.8,.2,1)}
+    @keyframes oroji-modalin{from{opacity:0}to{opacity:1}}
+    @keyframes oroji-sheetin{from{opacity:0;transform:translateY(16px) scale(.94)}to{opacity:1;transform:none}}
+    #oroji-msg-app .modal.show{animation:oroji-modalin .2s ease both}
+    #oroji-msg-app .modal.show .sheet{animation:oroji-sheetin .34s cubic-bezier(.2,.8,.2,1) both}
+    @keyframes oroji-pulse{0%{box-shadow:0 0 0 0 rgba(43,182,115,.45)}100%{box-shadow:0 0 0 11px rgba(43,182,115,0)}}
+    #oroji-msg-app .btn-ghost.done{animation:oroji-pulse .6s ease-out}
+    @media (prefers-reduced-motion:reduce){
+      #oroji-msg-app *,#oroji-msg-app .card.anim,#oroji-msg-app .modal.show,#oroji-msg-app .modal.show .sheet,#oroji-msg-app .star.pop,#oroji-msg-app .btn-ghost.done{animation:none!important;transition:none!important}
+    }
+  </style>
+
+  <div class="hero">
+    <img class="brand-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAACUYAAAKDCAYAAADc2UIvAAAACXBIWXMAAC4jAAAuIwF4pT92AAAgAElEQVR4nOzd7VUc27U27Nse/g9vBOoTATgCtSMQjkA4gi1HsHEEliPYKAJLEbgVgVEETxPBgQj2+2PRp/n+EjBXrbquMXqAsGzfA9FNddVdc/7h999/DwAAAAAAAAAAwEj+WB0AAAAAAAAAAADgpSlGAQAAAAAAAAAAw1GMAgAAAAAAAAAAhqMYBQAAAAAAAAAADEcxCgAAAAAAAAAAGI5iFAAAAAAAAAAAMBzFKAAAAAAAAAAAYDiKUQAAAAAAAAAAwHAUowAAAAAAAAAAgOEoRgEAAAAAAAAAAMNRjAIAAAAAAAAAAIajGAUAAAAAAAAAAAxHMQoAAAAAAAAAABiOYhQAAAAAAAAAADAcxSgAAAAAAAAAAGA4ilEAAAAAAAAAAMBwFKMAAAAAAAAAAIDhKEYBAAAAAAAAAADDUYwCAAAAAAAAAACGoxgFAAAAAAAAAAAMRzEKAAAAAAAAAAAYjmIUAAAAAAAAAAAwHMUoAAAAAAAAAABgOIpRAAAAAAAAAADAcBSjAAAAAAAAAACA4ShGAQAAAAAAAAAAw1GMAgAAAAAAAAAAhqMYBQAAAAAAAAAADEcxCgAAAAAAAAAAGI5iFAAAAAAAAAAAMBzFKAAAAAAAAAAAYDiKUQAAAAAAAAAAwHAUowAAAAAAAAAAgOEoRgEAAAAAAAAAAMNRjAIAAAAAAAAAAIajGAUAAAAAAAAAAAxHMQoAAAAAAAAAABiOYhQAAAAAAAAAADAcxSgAAAAAAAAAAGA4ilEAAAAAAAAAAMBwFKMAAAAAAAAAAIDhKEYBAAAAAAAAAADDUYwCAAAAAAAAAACGoxgFAAAAAAAAAAAMRzEKAAAAAAAAAAAYjmIUAAAAAAAAAAAwHMUoAAAAAAAAAABgOIpRAAAAAAAAAADAcBSjAAAAAAAAAACA4ShGAQAAAAAAAAAAw1GMAgAAAAAAAAAAhqMYBQAAAAAAAAAADEcxCgAAAAAAAAAAGI5iFAAAAAAAAAAAMBzFKAAAAAAAAAAAYDiKUQAAAAAAAAAAwHAUowAAAAAAAAAAgOEoRgEAAAAAAAAAAMNRjAIAAAAAAAAAAIajGAUAAAAAAAAAAAxHMQoAAAAAAAAAABiOYhQAAAAAAAAAADAcxSgAAAAAAAAAAGA4ilEAAAAAAAAAAMBwFKMAAAAAAAAAAIDhKEYBAAAAAAAAAADDUYwCAAAAAAAAAACGoxgFAAAAAAAAAAAMRzEKAAAAAAAAAAAYjmIUAAAAAAAAAAAwHMUoAAAAAAAAAABgOIpRAAAAAAAAAADAcBSjAAAAAAAAAACA4ShGAQAAAAAAAAAAw1GMAgAAAAAAAAAAhqMYBQAAAAAAAAAADEcxCgAAAAAAAAAAGI5iFAAAAAAAAAAAMBzFKAAAAAAAAAAAYDiKUQAAAAAAAAAAwHAUowAAAAAAAAAAgOEoRgEAAAAAAAAAAMNRjAIAAAAAAAAAAIajGAUAAAAAAAAAAAxHMQoAAAAAAAAAABiOYhQAAAAAAAAAADAcxSgAAAAAAAAAAGA4ilEAAAAAAAAAAMBwFKMAAAAAAAAAAIDhKEYBAAAAAAAAAADDUYwCAAAAAAAAAACGoxgFAAAAAAAAAAAMRzEKAAAAAAAAAAAYjmIUAAAAAAAAAAAwHMUoAAAAAAAAAABgOIpRAAAAAAAAAADAcBSjAAAAAAAAAACA4ShGAQAAAAAAAAAAw1GMAgAAAAAAAAAAhqMYBQAAAAAAAAAADEcxCgAAAAAAAAAAGI5iFAAAAAAAAAAAMBzFKAAAAAAAAAAAYDiKUQAAAAAAAAAAwHAUowAAAAAAAAAAgOEoRgEAAAAAAAAAAMNRjAIAAAAAAAAAAIajGAUAAAAAAAAAAAxHMQoAAAAAAAAAABiOYhQAAAAAAAAAADAcxSgAAAAAAAAAAGA4ilEAAAAAAAAAAMBwFKMAAAAAAAAAAIDhKEYBAAAAAAAAAADDUYwCAAAAAAAAAACGoxgFAAAAAAAAAAAMRzEKAAAAAAAAAAAYjmIUAAAAAAAAAAAwHMUoAAAAAAAAAABgOIpRAAAAAAAAAADAcBSjAAAAAAAAAACA4ShGAQAAAAAAAAAAw1GMAgAAAAAAAAAAhqMYBQAAAAAAAAAADOdP1QEAAAAAgMnYTbJfHaITJ0nOqkMAAAAAd1OMAgAAAAAeaz/Jf6pDdOIvSVbVIQAAAIC7WaUHAAAAAAAAAAAMRzEKAAAAAAAAAAAYjmIUAAAAAAAAAAAwHMUoAAAAAAAAAABgOH+qDgAAAAAAAAAAdGFx8XhrZ0lOCv5/gcEpRgEAAAAAAADANOwm2b/2teUtf++2ryXJ+5cM88ZOk6xv+fr6lq/fVrRavXQgoH+KUQAAAAAAAADw9vbTik73fb6bZO+Nc/Xq3cXjuueWvb5f+nydq+Wq1R2fAxOjGAUAAAAAAAAAL2d58XFTcLo85WmR28s9vL33d3yeJL/e8vfPs51Ctc62SLW65WtAJ/7w+++/V2cAAAAAAKZhmeQ/1SE68Ze4cxwAYI4WdzxMduKyzTSqk2zX+l3+CLwRE6OA5OYu4tt2Eyd37yLeWORlGu7fH/4rt554vG1X8Dqa2QAAAAAAADzeZtLTMtvrZouY9MTjvb/28bofuVqUWl18fXXH3weeycQoGNPlYtPlHcTLS3/nubt2p+40j9sPfPlzAAAAoFnGxKgNE6MAAKZtcz3tcglqEeUn6m1W9l0uTa1jGAQ8i2IUTNPyjo/7SXbeOMvoLhepVhcfNwch6zgAAQAAYF6WUYzaUIwCAJiOTQFqkXZM65oaU/U920lTq7heCQ9SjIJ+LbPdSbxpqs91ylPvNuWp6w87ggEAABjNMopRG4pRAAB9WmZbhNpPsleaBt7G92ynTK3jvQr8nz9VBwD+rwB1ualuROe0vLt43FVc+56rZanNRwAAAAAAAJ5vkW0RahklKObrfW5eq/yRVpA6ufSA2VGMgrez2VO8zLYEpQA1D7cdiCTtYORya9uEKQAAAAAAgLttrrVtHtbhwd32crMs+D3b65KruDbJDFilB69nmatFKCUoHuM82wORy+Mugec7vHgA8LBldYAB7Sf5XB0CeHPHF48RLWOV3oZVen06jPeAAI+1rA4Aj6AIBa9rM1Vq81CUYjgmRsHL2M32gGw/d69Ug4fs5OaEqdNcLUut3jwVTNsiXpcBqLMbv4dgjlbVAWDGFvG7FwCmbDfJQdo1t4MoQsFr20yV+uXiz5ui1Nd4b8sgFKPgeS4XoZaxr5jX9e7i8eHS1zZjLjcPAAAAAACAKVqklaAO45obVLtelPqWbVFqXRMJfo5iFDzeMtt2uoMyqm2mSv168WdFKQAAAAAAYCr204pQB2k3hwN9+nDx+GfaNKmvF4+TylDwFIpRcDejOpmSy0Wp82wLUtrbAAAAAABADxYxGQqmbDNN6tckp2nXIT/HtUg6pxgFVy3SDsgO0komMEU7udre3hyYHEd7GwAAAAAAeFuHFw/X3mAc79LW7f2SNknq+OJxVhcJbvfH6gDQgUWST2mFkf+XViRxYMZINgcm/007GDlOK/8BAAAAAAC8hkXaJJmzJL/FtTcY2V7aNfb/TbsOuawMA9eZGMVcbdbkfYpRnczLTpKPF4/zbPcAf60MBQAAAAAADGGZdv3tQ3EOXt6PPDwNaJ2ba9UWF4/77MY121FsrkOeJjlKK0pBKcUo5mazt9jBGFwtSVm3BwAAAAAAPNcyrQRhMlT/TrMtL60uff3y52epv160n1aY2lje8vkibXMK/XmXNi3u86WHNXuUUIxiDhZpzfSD+MUId7EHGAAAAAAAeKplFKJ6s5nstLr48+bjSaZ13ed6MWv1wN9f3vHRz2atnSS/pl2vV5CihGIUI9usyvPLDp5mswf4n0m+pBWkVoV5AAAAAACAvuynFRxch6txnlYcOkmb/rT5uC5LVG917eNlu2k/s/tpQzU2n++8QS4aBSnKKEYxmt20VXmfYjpUrx6zfzgx+rIX1/cAf42DFAAAAAAAmKvdtOsFvxTnmJPTbEtQq0xv8lMPNhO0Vte+frkwtXnsvWWwGVKQ4s0pRjGKRdqL52E0e9/Spo1+ec/w5YOxdV62mX55l/Dm88XFYzcOVF7T5T3Axxcf14V5AAAAAACAt3WYdn3AtbjXs7n2tooS1Fu4qzC1vHjsX3z0M//yLhekjtJeW+BVKEYxdYu0F8qPtTGG9yM3R3Fe3+v7Fi7/f67u+DuLbEdgbj4a4/pydtLuAvklbc3eURSkAAAAAABgZIu0m6Zdb3l559kWc1apuf7GTatcvRa5yLYstYytNy9pJ8k/0wpSn9K218CLUoxiqhZRiHotP7I98No8pmR98Vhd+/oi2xGYyzh4fwmbNXvf056Pq8owAAAAAADAi9tMczEx5+X8SCt/fM30rsPN1TqtHHh88efN9cZlkg8FeUb0Lsm/0647fornBi9IMYqpWUQh6qVtDr5WGXsc5/ricbllfPmgZRkH9c/1Psl/oiAFAAAAAACj2E0rgSh9vIxv2ZahRr0WNyeb4RKb9W8Hlx6uN/6c90n+m+RfadcdPV/4aYpRTMUiClEv5TStuLIpQ835l8n1g5Zl2gHLMsleTaRJ2xSkvqU1udelaQAAAAAAgOfYT7uOZF3Yz1GGmo/Nv3OiJPVSfkn7Hlqvx0/7w++//16dAe6zm+0+Ub84nu807RfGcYwdfKxFtgct1u49z5e0QuO6NgYAPGgVv+83/lAdAF7ZKp7v131PuzkEHmuZdlMMyV9iajLAFK3imHDDe0Buc5jkt+oQE3aadkP+17g+wvZao+EfP+db2muTgiHP8sfqAHCPw7QSz69RinqO87QRg39OK/nYxfo067QD12WS/y/J39PWDvJ4H9N+5o7SSo4AAEB/VtUBAACAbhxHKeq5vqQV5xdp15fWlWHoxte0a96ba42npWmm60Pac+qgOAcTpRhFj/bTTsz+FiM6n+Nbkr9mO21LGernnaUdxO4n+Z+0wpkDl8fZSSs3nsTBCgAA9RbVATrkbksAAGA37dqcqTZPc57kH2nXjg7jxhPutrnWuEgr0H0rTTNNO0n+nVbgNJCBJ1GMoie7ab8Q/htjbJ/q8oHXQexZfU3rtMLZIq2A9r0yzIS8SztYWcXFKAAA6rj55iY30wAAwLxtSlGuzT3e5rrcIm1rxrowC9OzSrue+z9pk8Z4mo9p38P94hxMiGIUvVimnYz9pTjH1Jwm+VvaQetRHHi9ta9pP7ubA5fz0jTT8D7tuf6pOggAAJDExCgAAJizzRaXveIcU3G9EOX9FD9jnTZpTEHq6fbSXrsOa2MwFYpRVNtMifpP3Ln7FN+z3VN8XJqEZHvgskg7IFaQut9Okn+mFaS0uQEAoJaJUQAAME9KUU/zLe17dhSFKF7WOtuClBV7j7eT5Le0rgHcSzGKSsuYEvVUm0LUMvYU9+gs7YB4EQWpx9hLW515VJwDAIB5WFQH6JD3LAAAME+LtOtMO7UxJuE07drcQWxu4XWt037O/pL2c8fj/BKDRHiAYhRVTIl6mh9RiJoSBamn+TXt53pRGwMAgMEtqgN0yLQoAACYn90kX6MU9Rj/ynayFryVVbbXGHmcj1GO4h6KUby1RUyJeorTJH+Lg66pulyQshv4fu/TXhsOqoMAAMCMWP8AAADzshvr8x7jPMlfk3yK903UOUry57QBGjxMOYo7KUbxlg7Sig8Oth7nH2mFqOPiHPy8s7TdwH9OW4fI7XaS/Dt2AQMAwFsxMQoAAObla1yne8iPtA0uX4tzQNLet++nTS/jYcpR3EoxirdylFZ4MJbzYd+T/E/a90wLfSwnaQfTf431evf5Je17tVsdBACAoTi+vMl7TgAAmI/jtO0N3O1b2nUcN5HQm09pW4ZcX3zYx7SBFfB/FKN4bZs9xb9WB5mA8yR/TzvgWpcm4bV9TVuvp919t72058F+cQ4AAMbh2PImJ/sBAGAeDtPKAtztS9r2GzeQ0KvjtOvIylEP+y3tewVJFKN4XYu0PcUfamNMwve0k/RWiM3HWVq7+y9JTouz9GonyX+j1Q0AAK9lXR0AAAB4dftpJQHu9iWuRTANm+00P4pzTMHXmB7OBcUoXst+2guzPcX3MyWKVdrz5Utxjp79lrZaEgAAeFnr6gAAAMCr2mx24W5KUUyNctTj7MTrHxcUo3gNB2llj53iHL37kfZLy5QoztIOuv8a4y/v8mvaiFAAAHgudwleZXItAACM73OSd9UhOqYUxVSdRTnqMd6nbfBh5hSjeGmHSf4dpaiHfEn7ZXVSnIO+fE2bHuUg5nYfY+wlAADPt18doDPr6gAAAMCrOkg7r87tlKKYus3gBUMX7neUZFGcgWKKUbykw9hR/Bh/S/tenRXnoE/rWK13nw9pE+mUowAA4OesqwMAAACvZje2MNzne5SiGMNmrZ5y1N124vVw9hSjeCmHUYp6yHmSP8cLL49zmFai46a9KEcBAMDPWlcHAAAAXs3n2O5yl9O0aVowipMo+j3kfXyPZk0xipdwGKWoh/xIG9FndR5PcZzkL9Hyvo1yFAAA/Jx1dQAAAOBVLGOF3l3O00pRtrowmq9J/lEdonOf47ribClG8bMOoxT1kG9pB6EOsniOVYzAvItyFAAAT/G+OkBn1tUBAACAV/G5OkDHPsUQA8Z1lLYmktvtpL0GMEOKUfyMwyhFPeRLNM/5eSdpE8d+FOfo0aYcBQAAPM26OgAAAPDiDtPOm3PTt7RNHTCygxi2cJ9f0665MjOKUTzXQZSiHvIldpXycs7SJkcpR920F29mAADgqdbVAQAAgBd3VB2gU+dxzY55OIuf9YccVQfg7SlG8Rz7UUJ4yN/jlw4vTznqbh/jdQkAAB7LewoAABjPYZJ31SE6dRjbXZiPr2kT0rjdx5gaNTuKUTzVbtraqp3iHD37W+xv5vUoR93tYxQSAQC43bI6QGdcEAAAgPEcVQfo1Le0ogjMyadYqXefT9UBeFuKUTyFUtTD/hZTa3h9ylF3+y1t1ScAAHC3k+oAAADAizqMaVG3OY8CBPO0jkEe9zlM6z4wE4pRPMXnJHvVITr2JUpRvB3lqLsdp638BAAAbmdiFAAAjOWoOkCnPqcVRGCOjpKcVofo1E5soZkVxSge61Pamipu9yVePHl7m3KUUZhX7aSVozS9AQDgdiZGAQDAOJYxLeo25zExB46qA3TMNLkZUYziMfaT/LM6RMeUoqikHHW7vXjDAwDAlomiV5kYBQAA43Bx/3af470PHMfUqLu8i/NFs6EYxUN2k3ytDtGxH3HASb2TKOfd5mM8PwEAaEwTvcrEKAAAGMNukg/VITpkWhRsHVUH6JjriDOhGMVDjmP85l1O0yb1aJvTg69J/l4dokNH0fYGAIDrvI8FAIAxHFYH6JRpUbB1HFOj7nJQHYC3oRjFfQ6iZX6X87Tvj4MqevI5bbUjWztpB3wAAEDzvToAAADwYg6rA3TItCi4yXPidjtRjpoFxSjusogywX0OY/UAffqUtuKRrb0YEwoAMHeL6gAAAAAvbJF2/purvsZgA7juOK00yE3L6gC8PsUo7vI5rSHJTf9KO6iCHp2lFfcc3Fz1a6zUAwCYs0V1gI6sqgMAAAAvwpST25mMAzedxfXtu3gtnQHFKG5jhd7dvqdN5IGencSEpNscVwcAAAAAAIAX4mL+TT9i4wvc5bg6QKfexQ11w1OM4rrdeFG8y3kcZDIdn9OKfGxZqQcAACZGAQDACHaTvK8O0aHj6gDQsVWS0+oQnVpWB+B1KUZx3VGs0LvLYewkZloOY6XedZ+i9Q0AMEeL6gAAAAAvaFkdoFPH1QGgc9bp3W5ZHYDXpRjFZYskv1SH6NS/4hcF07OOCUnX7cR+cQCAOXpXHaAjq+oAAADAT1tWB+jQ9xhwAA85rg7Qqf3qALwuxSguO64O0KnTKJcwXVbq3fQh3jQCAAAAADBdLuLfZMABPOwkts3cZi9tRSmDUoxiYxm7iO9yGA1zpu2wOkCHTI0CAGCO3DQBAABjcE3vJsUoeBzPldspnA5MMYqNo+oAnfpXrBlg+tZJ/lEdojN7URgDAJgLd/xtuekHAACmz8X7m07TroUAD1tVB+iU19aBKUaRmBZ1l/MojDGOzzEa87qj6gAAALwJJ7a2TqoDAAAAP817nJtW1QFgQlbVATq1qA7A61GMIlEOuMth3E3LOM6SfKoO0Zl3MTUKAIB58R4XAACmb1EdoEOr6gAwIesYpnAbpdOBKUaxjGlRt/ke+1UZz3HaOFm2jqoDAADAGzIxCgAAps/F+5u814Gn8Zy5abc6AK9HMYqj6gCdMlmHUR1VB+iMqVEAAONzYmvLxCgAAJg+73FuUvKAp1lVB+jQXnUAXo9i1LwtY1rUbb7EARTjOo6pUdcdVQcAAOBVuZt6y3tdAACYPtf2rvpeHQAmyPkBZkUxat4OqwN06DymRTG+o+oAnXmX5KA6BAAAvLLz6gAAAACvYF0dACbIROnbLaoD8DoUo+ZrkeRjdYgOfY5fBIzvOKZGXacQCQDA6NwNCgAA02eN3k3r6gAwQavqAJ1aVAfgdShGzddhdYAOnacVo2AOjqoDdOZ9rFgBAGBsbgICAIDpcx77JjeBAHAvxaj5OqwO0CHTopiT41ilcZ2pUQAAY1pWB+iEiwUAAMCIXNuD5/leHQDeimLUPB0keVcdojOmRTFHfuavOogxxAAAjGtdHQAAAOAVKEYBcC/FqHk6qA7QIdOimKPj6gCd2YnXRwAAxrWuDgAAAPAKTMcF4F6KUfOzm+RjdYjOmBbFXK2TfKsO0Rnr9AAAGNW6OgAAAADQjVV1AHgrilHzYxrKTccxLYr5Oq4O0Jm9JIvqEAAAvKj31QE6sa4OAAAAAABvTTFqfhSjbjItijn7mjY1ja3D6gAAAPDCTqsDAAAAAEAFxah52U3yoTpEZ77FXbNwXB2gM4fVAQAA4IWtqwMAAAAAQAXFqHlZVgfokGlRoBh13bsk+9UhAADgBa2rAwAAAABABcWoebFG76rTJKvqENCBk1itcZ3XSwCAMSi8N+vqAAAAwIs4qw4AMLBVdQBeh2LUvCyrA3TGtCjY+lodoDOKUQAAY9itDtCJk+oAAADAi3BsD7wU50yYDcWo+dhPWw/FliIIbHk+XLWXZFEdAgAAXoi7ygEAAIDLTNm+6rw6AK9HMWo+ltUBOvMtVgnAZav4hX/dsjoAAAC8EHeVAwDAOH5UB+iMcgfwEpw7GZhi1HwsqwN0xnQcuGlVHaAz1ukBAEzfojpAJ0yMAgCAcTi+v8o6MHgez52rvLYOTDFqPpbVATpyHsUouI3nxVXL6gAAAPy0RXWADribHAAAxmKqyVXKHfA8e9UBOuO1dWCKUfOwn2SnOkRHvkbjE26zqg7QmZ0YwQsAwPR5/wsAAGNZVwfojPP48HQKhTcpRg1MMWoeHBBcZSoO3G6d5LQ6RGes0wMAYOqc2AMAgLE4xr9qUR0AJkh/4KZ1dQBej2LUPCyrA3RmVR0AOraqDtAZB4YAANO2qA7QAROjAABgLIpRVzmPD0/neXOT19aBKUbNgxe2rW9xUhju45f+VcvqAAAA/JRFdYAOOMYHAICxnMX2h8v2qgPABC2qA3Tme3UAXpdi1Dw4INiyRg/ut6oO0JmdKJcCADBtbg4CAIDxrKoDdGZZHQAmZlkdoDNuKhucYtT4ltUBOrOqDgCd84v/JsUoAACmbFUdAAAAeHGr6gCdcR4fnsZglatW1QF4XYpR43MgsPUjybo6BEyAcZFXeR0FAJiu3eoAAAAAr2BVHaAzy+oAMCHL6gAdWlUH4HUpRo3PBf2tVXUAmIh1dYDOeB0FAJiuud8B6aYHAAAY0zrJaXWIjiyrA8CEHFQH6MyPJGfVIXhdilHjc0F/a1UdACbCOr2r3lcHAAAAAACAa75WB+jITpSj4LGW1QE6s6oOwOtTjBrf3O+OvWxVHQAmQjHqJiVTAACmaFUdAAAAeDWr6gCdMQUHHraI/sB1x9UBeH2KUWNzIX/LCDx4vHV1gA4tqgMAAPBku9UBAAAAXtHXJOfVITqiGAUP8zy56jwGRsyCYtTYFtUBOrKqDgATsq4O0CFFUwCA6XEM570wAACMzjq9rXexIgweclgdoDNeQ2dCMWpsTgJvaXrC03yvDtCZRXUAAAAAAAC4xkX9qw6rA0DHFrFG77rj6gC8DcWosSlGbSlGAT9jUR0AAACeYVUdAAAAeFVfk5xWh+jIx1irDnf5VB2gM6dx3mQ2FKPGtqgO0BHFKHiaVXWAzryvDgAAAE90Xh0AAAB4E8fVATqj/AE37cZEteuOqwPwdhSjxmYUXmMlGAAAwPwsqwMUc4MQAADMw3F1gM4cVgeADh0k2akO0Znj6gC8HcWocVmjt+VkMDyd581Ny+oAAADwBGfVAQAAgDexTvKlOkRH3kU5Cq47qg7QmW9pr53MhGLUuOzP3VpXB4AJchEFAACmzc0OAAAwH8fVATpzVB0AOnKYVhhk63N1AN6WYtS4ltUBOuJkMDydYtRNJvEBADAljukBAGA+Vkm+V4foyLsoR0HShqkcVYfozGnaayYzohjFHChGwdN53txkEh8AwLQsqwMUc0wPAADzclQdoDOf4rw+fIppUdcdVQfg7SlGjWtZHaAT53GXLPAyFtUBAADgCbwXBgCAeVnF1KjLdmJdFvO2SCtGsXUaq0dnSTGK0blDFp7vtDpAZxbVAQAA4Am8HwYAgPk5qg7QmY8xTIL5+pxWEGTrqDoANRSjxvW+OkAn3CELz7euDgAAADyLmxwAAGCeVkm+VIfozHGs1GN+DpJ8qA7RGdOiZkwxitG5QxZ4Kd44AQBMy351gELr6gAAAECZoyTn1SE68i5W6jEvu1aqAUAAACAASURBVFEAus1hdQDqKEaNac4nf68zMQqez/Pnqr3qAAAAPMmcx8WvqwMAAABl1lEEuu5jlCKYj6+Z9zmR23xPm6jHTClGjclUky0To+D5PH8AAGCa1tUBAACAUkdJflSH6MznGC7B+D4neV8dokOH1QGopRg1JsUoAAAAmK91dQAAAKDcp+oAndlJmxjjOiqjOkzyS3WIDv0jzpPMnmLUmLSdt9bVAQAA6J4TYjCeub8vXlcHAAAAyq2S/Ks6RGeUoxjVfpLfqkN06EfaBD1mTjGK0a2rAwBDWVYHAODFHSfZqw4BvLi5n+ReVwcAAAC68ClW6l23F+UoxrKf9jPNTYfVAeiDYtSY/CIHXsKqOgAAvLLjJB+rQwC8gnV1AAAAoBuHSc6rQ3RGOYpRbEpRO8U5evSPJCfVIeiDYtSY5r4yAAAAHnIcpShgTKfVAQAAgK6cpE2O4irlKKZOKepuVuhxxZ+qA8Ar+l4dAIAuLGMNInDVfpIP1SGAV7WoDlBoXR0AAADoznHaOVI3iV21KUcdxHsppuUg7XmtFHXTedr3B/6PYhQAMLplkl+rQwAAb2pRHaCQMfEAAMBtDtNuFtsrztGbvbT3Uct4P8U0fEryz+oQHVN05Aar9Ma0qA4AAAAAlDirDgAAAHRrmbZiiqt2kvw3Vg7St90kX6MUdZ+/p02BgysUo8b0rjoAAAAAUMIdzgAAwF3O0iZHnRfn6NU/04onu9VB4Jpl2vv9D8U5evYlyefqEPRJMQoAAAAYzZxPYpsYBQAA3GezNk456nYf0tZwHRTngKSd3/ic5D8xHOU+39JKn3ArxSgAAABgNPvVAQqZGAUAADxEOep+O0n+nTY9alEbhRlbpj1XfynO0bsfUYriAYpRAAAAAOMwMQoAAHgM5aiHfUj7Ph1l3pOJeVuLJKuYEvUYP9Jex5wL4V6KUQAAAABj+FEdAAAAmBTlqIftJPk1bb3eYWkSRreb5DjJ/0vyvjbKJChF8WiKUQAAAMBo5nonr5OBAADAUylHPc5Okt+iIMXL202bSrZO8rE0yXQoRfEkilEAAADAaPaqAxQ5qQ4AAABM0qYcdVqcYwreZVuQ+pT53pjDz1ukTYj637SpZDuVYSbkS5L9KEXxBIpRAAAAAGNwUhAAAHiuk7SygRXdj/MuyT/TClKf00ou8BjLJF/TVuaZEPU0/4qJbTyDYhQAAADAGFbVAQAAgEk7SyttfCnOMSU7SX5JK7msorTB7XbTJoytk/wnyYfSNNNznuRvad9DeDLFKAB4vHV1AAAAAAAAeEVnaeWevxfnmKL3aWv2ztJWpO2XpqEHB2nTof43bcLYu9o4k3SaVtg8ro3BlClGMTI7fYGXtq4OAADAg5bVAQqtqgMAAADD+Jzkz2mlBJ5mJ21F2n+zXbWnJDUfB2klnrMk/47pUD/jS9pz56Q6CNOmGMXI9qoDAAAAAAAAwESdpJUSvlUHmbB3aav2LpekDioD8eJ2c7MM9TGtIMfznCf5a9r0urPaKIzgT9UBAOiWqWsAADAd36sDAAAAQzpLK31sih/KHs+3KUn9klb8WKWtWVvFxoqp2U+bWH2QtkKRl/MlyacoRPGCFKMAuIuxrgAAAAAAQNIKPIu0cpTVYD9vJ+37uPlenqYVpDaPdUEm7rZIK0It08pQCoIv70daIWpVnIMBKUYxOjtHgZfiDnxG8CXeUAMwvmV1gCKr6gAAAMDwLk+P+pw2AYmX8S5t/drHiz+fpl3jXF36yNtZXjw2k6EUoV7PeVoh6rg4BwNTjGJ0VoEBwNZxvIEGgFEZMQ8AALyVzfq3TxcPpZGX9+7icXk614+0ktTmsXr7WMPZTSs/XX7slSaaj/O0guXnOKfBK1OMGtN5HIBsKEbB8y2qAwAAAI9mWjIAAPCWzpIcZVts+Hjv3+Yl7F08Ln+vT9O2BKwuPq7T3h8qmly1KUAtsl2Lt4ipZxUUonhzilFjOknyvjpEJ/bTWuvA0y2qA3RmXR0AAADu4WQiAABQ4SzJYVpJ6igKUm9tM1nqtmvD39P+fU5u+Tii/WwLUJc/um7eh9O0MtRxnMPgjSlGAcDjrKsDAADwKPvVAYqMemIbAACYhnUUpHqzKQR9uOM//5FWULlclrpenKqcPrUpN21sik6XP9+N1Xe9+55WhjqujcGcKUYxumV1AJiwRXUAAAB4hjmuVD+vDgAAAHBhnW1B6jDJpyQ7ZWm4z+VC0V3lqevO8/gbc1YXH5eP/Pv78bMyivO0rU5HMXiADihGjWkdIwGBn2ev8lXuwAcAoFeOVQEAgN6ss50edXjxcP1y+nby+H9H/97z8y2tEHVcnAOuUIwa07o6QEf8wgVein3HAAD0yrEqAADQs+OLxyJtgtRB3JwNo/iR9vz+Gj0FOvXH6gDwBhbVAWCCltUBOrSuDgAAwKPsVwcoYGIUAAAwBeu0YtQiyZ+TfInV4DBFP5L8Pcn/pJ2H+RzX0eiYYtSYVtUBOrOoDgAMYV0dAACAR9mpDlDAxCgAAGBqTtLW6+2mlaT+leS0MhBwr+9RhmKirNJjDvajLAZPtawO0BlvxgAA6JmJUQAAwJSdpE2S+pR2XW+Ztm7vfWEmmLvTtGvsXy8+uimLyVKMGpMTolfNcY0C8LLW1QEAAOAe6+oAAAAAL+Tk4vE5bZrU8tJjryoUzMS3tBLUKjoHDEQxakzamlctqgPABC2rA3RmXR0AAIBHWVQHKLKuDgAAAPAKztKm1Xy9+LOiFLyc87Ty0+rSA4akGDWuH3EwsGHMJjzdojpAZ9bVAQAAeJRFdYAC1j4DAABzcVtRarN6b3nx+U5FMJiA01wtQpkIxWwoRo3L1Kir9uPFHZ7iXXWAznj9AACgV+vqAAAAAEXOcnPSzf61hwEKzNHlaVCbj/oDzJZi1LhW8Yv+MsUoeLz96gAdWlcHAACAO6yrAwAAAHTkJDevCe6nTRjeTJdaxA3ijOM07dzAKtuf/3VdHOiPYtS4ND6vWiY5Ls4AU7GoDtAhxUoAgGnYrQ5QYF0dAAAAoHObssjXS1/brOG7XJqyio+ebaZAbYpPm8/1AuABilHjchH/KhNw4PE8X676UR0AAIBHm+Ox7Lo6AAAAwATdtoZvY5lWllqkvc/cjU09vJ3NBCgFKHghilHjUoy6ai/toMUvDHjYsjpAZ7yeAgDQs3V1AAAAgMGs7vj6ZsrU4paH1Xw8xY9sy3m5+HgW16TgVShGjessrU3ql/DWMldHZAK3m+Nd9vdZVwcAAIB7rKsDAAAAzMTlIsttFhePTYEq2d6Mbk3ffGxW3iXbn5fNxCeTn6CAYtTYTqIYddkyilHwkEUcmF+3qg4AAMCj7VYHKLCuDgAAAECS9v5sffH5XdckL5emNmv6kqvbPKzt69NmxV2yLThdnvKk9ASdUowa20mSD9UhOrKsDgATYFrUTcaWAgBMx9yOZ39UBwAAAOBJrq9Pe8jy0ueXi1TX/7PdJHvPjzU73y99fn2F3eWC0zpuSILJU4wa2yrJr9UhOrKXNg1nXRsDurasDtCZzY5nAADokWNVAACAsa3u+Pwxrhepku26v9ssH/G/+doFrMtTme6zuuPr61v++7d9DZgRxaixmXJy0zLJcXEG6Nnc7rB/iNdRAAB65ngVAACAu3jPCJDkj9UBeFVnMVb/uoPqANA5e6uvWlUHAACAe5gYBQAAAAD3UIwa36o6QGeW1QGgY8vqAB1aVQcAAOBJ5lb0d/cvAAAAANxDMWp8q+oAndmJqVFwF8+Nqx67xxoAAKqYGAUAAAAA91CMGt+qOkCHlD/gdsvqAJ1ZVQcAAIAHmBgFAAAAAPdQjBrfWZIf1SE6oxgFN+0m2asO0ZlVdQAAAHiAiVEAAAAAcA/FqHlYVQfojHV6cJPnxE2r6gAAADzJsjrAG/teHQAAAAAAeqcYNQ9fqwN0SAkErlpWB+jMjyTr6hAAAAAAAAAAPJ9i1DyskpxXh+jMQdrqMKBRFrxqVR0AAAAesKoOAAAAAAC9U4yaD1OjrrJOD7YO0p4TbB1XBwAAAAAAAADg5yhGzYdi1E2H1QGgE0qCV50nOakOAQDAk+1XB3hjq+oAAAAAANA7xaj5WFUH6ND7JIvqENABxairFEkBAKbJunQAAAAA4ArFqPk4S/KlOkSHPlUHgGLW6N2kGAUAwBSsqgMAAAAAQO8Uo+bFxf6bDqsDQDHToq46j9dKAAAAAAAAgCEoRs3L17SL/mztRDmK+dpN8rE6RGeOqwMAAPBs+9UB3tD36gAAAAAAMAV/qg7AmztO8kt1iM4cRRmCeTqsDtCh4+oAAAA82251gDd0Vh0AgDvtZ16/ky5bVQd4Zf5tAQBgghSj5uc4ilHXvUuyjDd3zM+n6gCdOU1yUh0CAAAewXErQJ8Ok/xWHaLQH6oDvKLD+LcFAIBJskpvfk6S/KgO0aGj6gDwxpZppUC2PlcHAACARzIxCqA/h5l3cWZkh/FvCwAAk6UYNU8u/t/0Pq0oAnNxWB2gQ8fVAQAA+CmL6gBvyMQogL4cRnFmVIfxbwsAAJOmGDVPx0nOq0N06Kg6ALyRRZKP1SE68yXuugcAmLo5TUR17ArQj8MozozqMP5tAQBg8hSj5svUqJtMjWIuPlUH6NBxdQAAAHgCE6MA+nFYHYBXc1gdAAAA+HmKUfN1XB2gU0fVAeCV7cZJneu+J1lVhwAAgEcyARoAAAAAHkkxar7WaaujuMrUKEb3KclOdYjOHFcHAADgpy2qA7wh06IAAAAA4JEUo+btqDpAp46qA8Ar2Y01etedRjEKAGAEi+oAb2hdHQAAAAAApkIxat7WMTXqNu+THFSHgFdgWtRNR9UBAADgidbVAQAAAABgKhSjOKoO0KnP1QHghZkWdZNpUQAATNG6OgAAAAAATIViFOuYGnWbd1EaYyxHMS3quqPqAAAAvJjd6gBvaF0dAAAAAACmQjGKRDngLp+SLKpDwAtYJPmlOkRnTIsCABjLfnWAN7SuDgAAAAAAU6EYRdJOqv6jOkSHdmKlHmM4rg7QoaPqAAAA8Ezr6gAAAAAAMBWKUWx8TnJeHaJDH5IcVIeAn3CQ5H11iM78iLIYAADTdFodAAAAAACmRDGKjbO01XHcdJxktzoEPMNuTD27jdc6AACmal0dAAAAAACmRDGKy47TJqlwlZV6TNWnJO+qQ3TmW5JVdQgAAF7csjrAG1lXBwAA+P/bu7uktrK0S8Drq8h79F1130FFDwByBMgjMDUCyyMwOQLjESQegeURJB6BxQhSjKBERN92NIyg+mKjBv+A+dE5+5yt54lQqOxynr0SSWkbLb0vAACMiWIU35vVDjBQb2KlHuNykOR97RADcx3TogAAGLdV7QAAAAAAMCaKUXxvmeRj7RADNY+VeozHvHaAATqNN5IAABi3Ze0AAAAAADAmilH8zEmSy9ohBmgnyVntEPAIp0n2a4cYmIuU/7YBAMCYXdUOAAAAAABjohjFz1zFSr37HMYqLoZtmuRd7RAD5HULANC2w9oBemJiFAAAAAA8gWIU91nESr37/JnkoHYI+IlJTDX7mY8p/00DAICxMzEKAAAAAJ5AMYqHnKSsn+JHi5QSCgzJWcrKR25ZoQcAQCv8/RwAAAAAnkgxiodYqXe/nZhAw7CcZnvWhzzFLD5VDwBAG/y5FgAAAACeSDGKX1km+aN2iIHaTzKvHQJSyj/vaocYoD9S/hsGAEDbtmXVuT/bAgAAAMAT/VY7AKNwmvKN5je1gwzQm5TJUfO6MdhiBymvUb71Jb4uAADbYlvWnJsYBQAAw7QXG1gAeNgyyVntENtKMYrHOk4pYOzXDjJAn27u5zVDsJUOUop5O5VzDM1l/CUUAID2mBgFAADDtJfkfe0QAAze53gPswqr9Hisq5QX6XXlHEO1nqoFfZmklPGUor51neQoPk0PAEB7/BkXAAAAYLzeJDmpHWIbKUbxFMuUwgE/2kmZ3KMcRR8mKc83E9x+dByfpAcA2Dbb8vewRe0AAAAAALzI+2zP97IGQzGKp1okeVs7xEApR9EHpaj7fYyVlgAA22hSOwAAAAAAPNJp7QDbRjGK55inFBD4kXIUXVKKut/nlGlRAADQovPaAQAAAADYiMMke7VDbBPFKJ7rOKWIwI+Uo+iCUtT9LpLMaocAAAAAAAAAeISj2gG2iWIULzGLctR9lKPYJKWo+10kmdYOAQBAVXu1A/RgUTsAAAAAABujR9AjxShe6jilmMCPlKPYhIMoRd1nXYq6qpwDAIC69moHAAAAAIAn2KsdYJsoRvFSVynFBOWon1uXo2Z1YzBSSlH3U4oCAGCbLGoHAAAAAIAxUoxiE5SjHraT5FOUo3iaWcqbHzt1YwySUhQAANvGn30BAAAA2nFYO8A2UYxiU9blqPPKOYbsU5J57RCMwmnK80Up6kdKUQAAfG+vdoAeLGsHAAAAAIAxUoxik9blqM+VcwzZm5RvaE9qB2GQJilTot5VzjFUSlEAAPzMbu0AHbuuHQAAAAAAxkoxii7Mohz1kP0kq5SCB6xNU54Xxib+nFIUAADbyrQoAAAAgLbYxNUjxSi6MkvyR+0QA7aT5GuSk8o5qG+Ssjrva6zOu8/nKEUBALC9/DkYAAAAAJ5JMYounSZ5WzvEwL1PWZ22VzcGlUxTPv1tdd79PqYULb0ZBADAz2zDmnITowAAAADgmRSj6No8ye9JrivnGLLDlG90H9cOQm/uTonarZxlyN7G6wIAgIcd1A7QAx8SAAAAAIBnUoyiD8uUiUgXlXMM2U6SP2N61DY4iilRv3KdUqicV84BAABDYGIUAAAAADyTYhR9uUr5JO/n2kEGbj096qRyDjbvIKX49ldMiXrIeUo50Js/AABQmBgFAAAAAM+kGEXfZinrsazWu99OkvdJVkmmVZOwCXspk4/+Tim+cb8PKc95b/wAAMAtHxoAAAAAgGf6rXYAttI8ZXLOWZL9qkmGbTfJ15QJOsfxzfCxmaQ8bu9rBxmB65QVg4vKOQAAGJ9p7QAdu6wdAAAA+KVlkle1Q2yRr7UDDMRFyvtQvNwsyZvaIQbij3hPui8GRfRIMYpaVimrxU6iOPIrhynThj6nfL1WNcPwS3spj9NRyvQvHvYl5Q+cfvMHAIAfrWoHAAAAfukqPvhL/zzvNmdaO8CALON5RYOs0qO2k5QWvU/B/tqbJP9Ombi1VzUJP3OQ8tj8O+WxUop62HWSf6UUyJSiAADg51a1AwAAAADAmClGMQSLlFLJx8o5xmJdkFpEg3kIZimPxd8xZvOxvqSU+84q5wAAgKFb1Q4AAAAAAGOmGMVQXKXswX2VshOXXztM2aO8SinnTGqG2TJ7SU5TnrefUh4Lfu0ypkRBbafx+wUAbZnWDtCxVe0AAAAAADBmilEMzSJletSHlFVb/NpuSjlnlbLK7ahmmIbtpZT3likTu97Furyn+JDy2jYlCuraT/m9VjkKAMZhVTsAAAAAAIyZYhRDdZJSovhSOceY7KSscvsr5ZvnpylfQ55vL9+Wof5MKRXweF+S/DPlNW1KFAyDchQAjMeqdgAAAAAAGDPFKIZslTL96FWS87pRRmc3ZaLR3ylllHnK19Kb4L92lFIqW0UZ6iXOU167R/FmDgyRchQAjMOqdgAAAAAAGLPfageAR1gkmSaZpUyd2a0XZZTWk6Te3Pz4IuVrur5t8xSfScpUrenN7bBmmEZcprxO53VjAI+wnzIRb1U5BzB88/i9neFqeUruZe0AAAAAADB2ilGMyfzmNkuZ6LNTMcuY7d/c3t38+DLljfFlSlFqlXbfJJ+mvHGyvpkEtTkKUTBOu1E4Bn5tUTsAPKDlvxeuagcAAAAAgLFTjGKM5knOkhzf3Fr+Rngf1m+Kv07y/s7Pr9cXLu65H6q9727Tm3tv/HdDIQoAALqxrB0AAAAAAMZOMYqxukopY5wmOYoVe104/O7+/Xf//2VuP8G8uPPzy3y7nu/7Hz/HeuXd2t7NLTc/P4nyU9/OU15/Z7WDAABAo7Z57TkAAAAAbIRiFGN3lW9X7J1EOaYvd9cvHT70C2nK55TX26JuDAAA+ObDEy0yMQoAAAAAXugftQPABs1Tpga9SvKlahJoy2WSD0n+mVJAXNQMAwAANya1A3TMxCgAAAAAeCETo2jR4ua2l+Q4pcixUy0NjNeXlMKhdXkAANA/E6MAAAAA4IVMjKJlq5Ri1CTJ2yTnVdPAOFwm+SNlOtRRlKIAAKAWE6MAAAAA4IVMjGJbzHO7am92c9utFQYG5jKlADWPT6UDADAee7UDdOiidgAAAAAAaIGJUWybVZKTlG+g/57kY0opBLbNZcrz//fcrp1UigIAYEz2agfokGlRAAAAALABJkaxzZYpZZDjJAcpU6SOYpIU7bpImQx1FiUoAAAYskXtAAAAAADQAsUoKL4vSR3d3PZrhoIXuk55Q+Xs5n5VMQsAAAAAAAAA9EoxCn60vLmdJJmkFKSmN/c71VLB45zntgxlKhQAAC3bqx2gQ4vaAQAAAACgBYpR8LCrJPObW1KmSU3v3BSlqGk9EWp5c7+omAUAAPq2VzsAAAAAADBsilHwNOtpUqc3P14Xpdb3u1VSsS3Oc/scXN8AAID2LGoHAAAAAIAWKEbBy3xfTpnk27LUQZSleLrr/FiAUoICAAAAAAAAgCdQjILNusqPK83WZan1be/m3ho+7hag1s+d1c0NAAB42KR2gI6c1w4AAAAAAK1QjILu/awsldwWpvZyW5aaJDnsLRl9uEwpOq3LT3dLUEA/Tm5usHaS5H3tEAPxKn5PAsZrv3YAAAAAAGDYFKOgnl+VY6Y39+vC1LpIlZQilRV9da2nPSXfTnla3NyvC1AAAABPsagdAAAAAABaoRgFw7X47v4+eze3+36cfFuqust0quJuyen7QtMqt6Wnqzu/DgAAoAs+YAEAAAAAG6IYBeO3ym1x56n+s7kYo7bM7YQuAABg+Ca1A3TIhzEAAAAAYEP+UTsAAAAAwBP9bCJuK0yMAgAAAIANUYwCAAAAGA4TowAAAABgQxSjAAAAAIbhunYAAAAAAGiJYhQAAADAMJgWBQAAAAAb9FvtAAAAAABPNK0doCNXtQMAAGyB4yST2iEAAOiHYhQAAADAMJgYBQDQPX/mAgDYIopRAAAAQFcOUj6Nv3dzu/tzT7HM7TSlxZ1rtcbEKAAAAADYIMUoAAAA4CUmKWWnaW4LUAdJdjZ4xuGd//1+g9cdGtMLAAAAAGCDFKMAAACAp5je3A5ubrs1wzRmVTsAAAAAALREMQoAAAB4yPTO7fChX8iLrWoHAAAAAICWKEYBAAAAd02SHN3cptnsSjzud1k7AAAAAAC0RjEKAAAA2EspQs2S7FdNsr1WtQMAAAAAQGsUowAAAGA73Z0M9bpyFhSjAAAAAGDjFKMAAABgu0xTJkMdxZq8IVnVDgAAAAAArVGMAgAAgPatp0OdJNmtG4V7rGoHAAAAAIDWKEYBAABAu/aSHKdMiDIdathWtQMAAAAAQGv+UTsAAAAAsHF7SeZJ/p3kXZSixmCeMtFrUjcGAAAAALRDMQoAAADasZfbQtSbqkl4qt0k75P835THcFozDAAAAAC0QDEKAAAAxm8vClEteZPka5JlyhpEAAAAAOAZFKMAAABgvPaiENWy/SSfklylrNnbqxkGAAAAAMZGMQoAAADGZ5JSlFlGIWob7KSs2ft3ShHuoGoaAAAAABgJxSgAAAAYl6OUQtT7lMIM2+VNkr+TLJJMqyYBAAAAgIFTjAIAAIBx2Espw/yVZLdqEobgMMnXJKsks6pJAAAAAGCgFKMAAABg+E5S1qgdVs7Rh/M7ty+Vs4zBbpJPKQWp45Q1iwAAAABAkt9qBwAAAADudZBknmS/co5NOb+5X3x3v0xydc8/M09ZH8fDdpP8mVKiO7253fc1BQAAAICtoBgFAAAAw3SS5H3tEM90kVJ2WqWUn1Y3t+dYRjHqKXZSnjfHUZACAAAAYMspRgEAAMCw7KVMSRrL2rzLlPLS4s79Ji03fL1toSAFAAAAwNZTjAIAAIDhOEopRe1UzvGQ65Ty01lup0ExXApSAAAAAGwtxSgAAAAYhtMk72qHuMdlShFqnv4nOE16Pq9VClIAANC2ae0A9GoSj/mm7NUOMCAHtQP0ZBUf9NsqilEAAABQ1yRl8tJ+5Rzfq1mGumtbvinXl7sFqZOUghQAADB+X2sHoFf78ZizeX/WDtCTDynfE2FL/KN2AAAAANhiBymfUBtKKeo6yeckv6d8YvI4dUtRdGcn5RueqySzqkkAAAAAoCOKUQAAAFDHLMnfKQWV2i6SvE0pQ80yrDKUiVHd2k3yKeUxn9aNAgAAAACbpRgFAAAA/TtJKaPU9iXJq5Ty0TzJVdU0PzepHWBLrNcwLFIKcgAAAAAweopRAAAA0K95kveVM3xO8s8kRylFmCEzMapfh0n+neQ0SmkAAAAAjJxiFAAAAPRjkuQsyZuKGdaFqFmSVcUcjzXJMFYNbqN3Kc+R48o5AAAAAODZFKMAAACge5OUyUyvK51/nrIyb5ZxFKLWTIuqayfJn0mWSaZ1owAAAADA0ylGAQAAQLfWpaj9CmdfJvlXSqllUeH8l5rWDkCS8tz9mrIG0no9AAAAAEZDMQoAAAC6U7MU9SFl4tJZhbM3Za92gA37nORjkovaQZ7pTazXAwAAAGBEfqsdAAAAABpVqxR1kbIyb9nzuV1obZXeSW5XGU6SHKVMxTpKWVs3Buv1ekcpBakWnmcAAAAANMrEKAAAANi8WqWo9ZSoVsoqNSZtdeUit6WoJLlKWU03S3m+/J4yTeqy51zPdZjk75Syl/V6AAAAAAySYhQAAABs3mn6LfVcJnmVUlJpxbR2gA2b/+L/X6ZMYNrLuEpS71OyLfGutAAAFvVJREFUTyvnAAAAAIAfKEYBAADAZs2TvOnxvPOUKVGLHs/sw7R2gA07e8KvvVuS+leSz10E2qDdJF9TCoGmRwEAAAAwGIpRAAAAsDnH6bcU9SGlQHTV45l9OagdYIO+X6P3FGcp6/b+O8nbDHuK1LuYHgUAAADAgChGAQAAwGYcJfmzp7OuU0oyJz2dV8O0doANmm/gGlc319lLWZs41ClSpkcBAAAAMBiKUQAAAPByB9lM+eUxrlNKQ32dV8Nekp3aITboKWv0HmORMkXqnylTw643fP1NeJeSs6XJXwAAAACMzG+1AwAAAMDITVJKSn0UeS5TJlMtezirpmntABv0kjV6v7JKmRp2mlKUOk6Z2DQU+0n+TilvndSNAgAAzTuvHQAYlEnK38th6ylGAQAAwMvM0883mi5SCkNXPZxV27R2gA2a93DGVUo5al2QOsmwClLvUx7To2zH8xcAAGqY1g4ADM48yZvaIaA2q/QAAADg+Y6TvO7hnG0qRSVtfUN/02v0fmWesorwbcqEsaE4TJlwdVQ5BwAAAGyLWZLPtUNAbYpRAAAA8DwHSf7s4ZxtK0XtZVjTjl6iyzV6vzLPbUHqulKG7+0k+StlshUAAADQvVmUo9hyilEAAADwPPMezrjMdpWikramRc1rB8htQepDhlOQepdkmZILAAAA6NYsylFsMcUoAAAAeLqTJPsdn3GdsnZsm0pRSVvFqL7X6N3nKuU5u5fhfCN0P6UcNa2cAwAAALbBvHYAqEUxCgAAAJ7mIMn7js+4TimMLDs+Z4imtQNsSM01eve5SvmU6O9JzutGSVJW631NKW0BAAAAwMYpRgEAAMDTzHs44zjbWYo6SLJbO8SGzGsHeMB6UtPbDGO93vuU6VqT2kEAAAAAaItiFAAAADzecbpfofchwy7VdGlaO8AGzWsHeIR5ynq9j3VjJEleJ1mklOMAAAAAYCMUowAAAOBxJul+5deXHs4YsmntABvyJWVt3RhcpRT+XqWs/6tpP6UcNa0bAwAAAIBWKEYBAADA45wm2enw+pdJZh1efwymtQNsyFntAM+wSJnW9KFyjp0kX+O1AAAAAMAGKEYBAADAr+0ledPxGUcZz5ShLkzTbfGsL9cZZzFq7STJ76k/PepTxrGOEAAAAIABU4wCAACAX5t3fP0PSZYdnzF0R7UDbMhZxl9wW6ZMj/pYOceblK/npHIOAAAAAEZKMQoAAAAeNk1y2OH1z1Om9Gy7ae0AGzLmaVHfO07yKmXNYy2vU9b8KUcBAAAA8GSKUQAAAPCwkw6vfZ1k1uH1x2KSZL92iA24TFvFqKSUkg6SfKmYYf9ODgAAAAB4NMUoAAAAuN803U6LOkmy6vD6Y9HSGr0WXaU8Rm9Tynw1KEcBAAAA8GSKUQAAAHC/WYfXPk9y2uH1x6SVYlTrj+c8pSx4Uen8nShHAQAAAPAEilEAAADwc3tJ3nR4/eMOrz0209oBNuA82zH9a5nyeNVarbeT5O9YQQkAAADAIyhGAQAAwM91WVz6mFIwoZRsdmqH2IB57QA9Wq/W+6Nihk9RjgIAAADgFxSjAAAA4OdmHV33OslJR9ceoxbW6F0nOasdooLTJK9S/v1rUI4CAAAA4EGKUQAAAPCjWbqbYnSaMnGHooVi1Fm29zFdJDlIclHpfOUoAAAAAO6lGAUAAAA/6qqscxnTou7aS7JbO8QGnNYOUNkqZSXil0rnK0cBAAAA8FOKUQAAAPCtSZLXHV37pKPrjlUL06IukixrhxiAq5TH82Ol85WjAAAAAPiBYhQAAAB8q8tpUfOOrj1Ws9oBNmDbp0V97zjJ20pnK0cBAAAA8A3FKAAAAPhWV8WoeUfXHatJkv3aIV7oOslZ7RADNE/yKuXr0zflKAAAAAD+P8UoAAAAuNXVGr3rmCz0vRbW6M1TVsjxo0WSaZSjAAAAAKhIMQoAAABuTTu67lkUaL7XQjFK2e1hyyQHSS4qnK0cBQAAAIBiFAAAANzRVVlHgeZbXU3m6tOXJKvaIUZglVI4rFGOOk0pZgEAAACwpRSjAAAA4Na0g2tepEzO4da0doANUHZ7vKvUKUftpKz0U44CAAAA2FKKUQAAAFDsJdnt4LrzDq45dmNfo3eZUrjh8dblqM89n7suR+31fC4AAAAAA6AYBQAAAEVXU2XOOrrumI29GHVSO8BIXSWZpU456ixlhSMAAAAAW0QxCgAAAIouilEXSVYdXHfMjlKKKmN1HVPAXmqW/stR+zHlCwAAAGDrKEYBAABAMe3gmqZF/Wjs06JOawdoxCx1ylHzns8EAAAAoCLFKAAAACi6mBi16OCaYzfmYtR1FKM2aZb+y1FvYhUiAAAAwNZQjAIAAIBkkm7Wuy06uOaYjX2N3jzJVe0QjZml/3LU+5tzAQAAAGicYhQAAAB0My3qvINrjt2Yp0UlpkV1ZZb+y1Gn6eZ1DwAAAMCAKEYBAABAmRi1acsOrjlmk4y7GPU5yap2iIbN0m85aidlolsXr30AAAAABkIxCgAAALqZHKMY9a2xr9E7qR1gC8ySXPR43rocBQAAAECjFKMAAACgG6vaAQbGtCgeY5p+y1H7SeY9ngcAAABAjxSjAAAAoJuJUasOrjlWkySva4d4gZPaAbbIVfovR71JmVYFAAAAQGMUowAAAKAUdzZt1cE1x2pWO8ALmBbVv3U56rLHM0/TTUESAAAAgIoUowAAAICuzWoHeIGT2gG21FXK+sXrns7bSXKWbkqSAAAAAFSiGAUAAACb11eZYwwOkuzXDvFMH2JaVE3LlMlRfb2edpPMezoLAAAAgB4oRgEAAMDmLWsHGJBZ7QDPdJ2yXo26lkmOezzvdc/nAQAAANAhxSgAAADYPOu4bs1qB3im05R1btQ3T/K2x/P+TJlUBQAAAMDIKUYBAADA5o11ddymzZLs1A7xDJdJTmqH4BvzJJ97PO8sCo4AAAAAo6cYBQAAAHTlpHaAZzqpHYCfmiX50tNZO0kWPZ0FAAAAQEcUowAAAIAuTJPs1g7xDOcp04kYplmSi57O2k9ZqQgAAADASClGAQAAQDemtQNUNtZCyXHtADzoKslRkuueznuXUsYCAAAAYIQUowAAAKAbk9oBKpqlTNsZm49JlrVD8Eur9Fs8PE1y0ON5AAAAAGyIYhQAAACUosWmbWuRYpLkpHaIZ7jOOHNvq2WStz2dtZPkLNtddgQAAAAYJcUoAAAA6KYYNe3gmmNwnGS3dohnmKWsaWM85kk+93TW7s15AAAAAIyIYhQAAAB047B2gAoOkryvHeIZzlMmAjE+syQXPZ31OqX4BwAAAMBIKEYBAABAsujoukcdXXeoTmsHeIbrlHIN4zVNeRz78Ge2d00mAAAAwOgoRgEAAEB3K9S2qRh1nHFOyTpJN6sU6c9V+l1deZZk0uN5AAAAADyTYhQAAAAky46uuy3FqIOUSTpjc55xTrniR8skf/R01m6SeU9nAQAAAPACilEAAABQXHZwzZ20v6ZtknGWRKzQa89pki89nfU621N8BAAAABgtxSgAAAAoupoaNevoukNxmmS/dohnmMUKvRbNklz0dNY8yV5PZwEAAADwDIpRAAAAUHRVjDpMMu3o2rXNkrypHeIZPic5qx2CTlylPC+vezhrJ+OclgYAAACwNRSjAAAAoFh0eO3TDq9dyzTJp9ohnuEiyXHtEHRqmeSkp7MOY6UeAAAAwGApRgEAAECxSHdTZvbTVhnnIOOcuHSdMk3oqnIOunea5EtPZ82TTHo6CwAAAIAnUIwCAACAW4sOr32SZK/D6/flIOXrtFM5x3Mcp7uViQzPLMllD+fspL8JVQAAAAA8gWIUAAAA3OpyCtJOymSZMRtzKepjxv/152mu0t+au3cprw8AAAAABkQxCgAAAG6dpbt1eklymPFOlhlzKepL2lplyOMtk3zo6azTns4BAAAA4JEUowAAAODWVbqdGpUk71NWfI3JmEtRFxnf15vNOkly3sM5h0mmPZwDAAAAwCMpRgEAAMC3+pj68injKevMkvydcZairlOKKleVc1DfLN1Og1s76eEMAAAAAB5JMQoAAAC+tUw/02XGUI46Tck5RkpR3LVKP+sUD5Ps9XAOAAAAAI+gGAUAAAA/OunpnE89nvUUBykFsXe1gzzTuhS1rJyDYZkn+dLDOSc9nAEAAADAIyhGAQAAwI8W6WdqVJK8T3KWZNLTeb9ykrI6b79yjpeYRimKn5ul+5V6Rx1fHwAAAIBHUowCAACAn5v1eNbrlFVfNQsV05sM7ytm2IS3UYriflfp/rW9E+UoAAAAgEFQjAIAAICfWyX50ON5O0n+SplWNe3x3OnNmV+T7PZ47qZdJ3mVsi4NHnKW7lfqTTu+PgAAAACPoBgFAAAA9ztJctHzmYcpJaVFuitXTFKm5ixvzjrs6Jy+XOe24AWPMUu3K/WmHV4bAAAAgEf6rXaALbKoHQC410G8RqEr/zPJ/9jg9f5Pkv+9weuxnfZqBxiQ05SVQjAkxxneGrRZyp8Xd3o+d12QukyZcDPPy742k5T1XtOb+77/fbqyLkUN7XnDsK1X6v3V0fX3O7ouDN1pyvdZtsm2/fs+ZFE7wIZ5bG8tagegaUP8OyAA0BDFqP6M/dO30LKdeI3CWEyS/K/aIaAh3rRliCa1A/zEMuWb9Z8qnb+b5N3N7Trljanlze3qzv1d05v7gzu3Fl/zFyklr1XlHIzTeqXe646uP4kCMtvnIL7Hss089u3y2NKlIf4dEABoiGIUAAAA/No8ZeLc+7oxspNS4uiqyDEmX1Im/iie8BKzlGJdFxPUTCcGAAAAqOwftQMAAADASJwk+Vw7BEmSDymTopSieKn1Sj0AAAAAGqQYBQAAAI83i3JUTddJXqWU1GBT1iv1Nm3RwTUBAAAAeALFKAAAAHiaWZSjaviSss5wUTcGjTpOKd5tyiavBQAAAMAzKUYBAADA082SvK0dYktcJ/kjVufRrVU2O4lsscFrAQAAAPBMilEAAADwPPOUtW4mw3TnS5KDJKe1g7AVTpNcbOhaZxu6DgAAAAAvoBgFAAAAz7dIWe92XjdGcy5TSmdHKZN8oC+zDVzjMqU4CQAAAEBlilEAAADwMldJpinr3kyPepnLlBWFe7GKjDqWST6+8BqzDeQAAAAAYAMUowAAAGAzTlMKPZ8r5xiju4WoedUkkJykPCef42OU+gAAAAAGQzEKAAAANucqZVrMq1iv9xgXUYhieK6SHD/jn/v8zH8OAAAAgI4oRgEAAMDmLVLW6ylI/eg6pUDye5KDKEQxTGd52mv3Y6zQAwAAABgcxSgAAADoziKlIPXPlDLQdc0wlX1JmQ41SSmQLKumgV+bPeLXXCf5V0yKAgAAABgkxSgAAADo3iqlZLGXUg7ahilS68lQ/0ry30mOYjoU47JK8uGB//9zymv6rI8wAAAAADzdb7UDAAAAwBa5SikHzVMKFUcpE6Ve1wq0YecpU7LOYiIUbThNmQa1c+fnPic5SSlOAQAAADBgilEAAABQxyqldHF68+N1SeogyWGdSE9ymVJ+Wty5h9ZcpRSjTnJbalxVSwMAAADAkyhG9ee/agcAAABg0M7y7UquaUpJ6iBlulStstRlShFkeed+mVIYgW0wjzWQ8FjT2gEAAADgLsUoAAAAGKZFfpzCNEkpSq3vc+fHa48tUJ3/5LyklJ9WKcUn6/AAAAAAgNFSjAIAAIDxuMptgensgV8HAAAAALD1/lE7AAAAAAAAAAAAwKYpRgEAAAAAAAAAAM1RjAIAAAAAAAAAAJqjGAUAAAAAAAAAADRHMQoAAAAAAAAAAGiOYhQAAAAAAAAAANAcxSgAAAAAAAAAAKA5ilEAAAAAAAAAAEBzFKMAAAAAAAAAAIDmKEYBAAAAAAAAAADN+a12AAAAAABgNK6SnNcOMRBXtQMAAAAAD1OMAgAAAAAea5lkWjsEAAAAwGNYpQcAAAAAAAAAADRHMQoAAAAAAAAAAGiOYhQAAAAAAAAAANAcxSgAAAAAAAAAAKA5ilEAAAAAAAAAAEBzFKMAAAAAAAAAAIDmKEYBAAAAAAAAAADNUYwCAAAAAAAAAACaoxgFAAAAAAAAAAA0RzEKAAAAAAAAAABojmIUAAAAAAAAAADQHMUoAAAAAAAAAACgOYpRAAAAAAAAAABAcxSjAAAAAAAAAACA5ihGAQAAAAAAAAAAzVGMAgAAAAAAAAAAmqMYBQAAAAAAAAAANEcxCgAAAAAAAAAAaI5iFAAAAAAAAAAA0BzFKAAAAAAAAAAAoDm/1Q4AAAAAAAAAAEBnrpKc1w4xEKvaAejXf/3nP/+pnQEAAAAAAAAAAGCjrNIDAAAAAAAAAACaoxgFAAAAAAAAAAA0RzEKAAAAAAAAAABojmIUAAAAAAAAAADQHMUoAAAAAAAAAACgOYpRAAAAAAAAAABAcxSjAAAAAAAAAACA5ihGAQAAAAAAAAAAzVGMAgAAAAAAAAAAmqMYBQAAAAAAAAAANEcxCgAAAAAAAAAAaI5iFAAAAAAAAAAA0BzFKAAAAAAAAAAAoDmKUQAAAAAAAAAAQHMUowAAAAAAAAAAgOYoRgEAAAAAAAAAAM1RjAIAAAAAAAAAAJqjGAUAAAAAAAAAADRHMQoAAAAAAAAAAGiOYhQAAAAAAAAAANAcxSgAAAAAAAAAAKA5ilEAAAAAAAAAAEBzFKMAAAAAAAAAAIDmKEYBAAAAAAAAAADNUYwCAAAAAAAAAACaoxgFAAAAAAAAAAA0RzEKAAAAAAAAAABojmIUAAAAAAAAAADQHMUoAAAAAAAAAACgOYpRAAAAAAAAAABAcxSjAAAAAAAAAACA5ihGAQAAAAAAAAAAzVGMAgAAAAAAAAAAmqMYBQAAAAAAAAAANEcxCgAAAAAAAAAAaI5iFAAAAAAAAAAA0BzFKAAAAAAAAAAAoDmKUQAAAAAAAAAAQHMUowAAAAAAAAAAgOYoRgEAAAAAAAAAAM1RjAIAAAAAAAAAAJqjGAUAAAAAAAAAADRHMQoAAAAAAAAAAGiOYhQAAAAAAAAAANAcxSgAAAAAAAAAAKA5ilEAAAAAAAAAAEBzFKMAAAAAAAAAAIDmKEYBAAAAAAAAAADNUYwCAAAAAAAAAACaoxgFAAAAAAAAAAA0RzEKAAAAAAAAAABojmIUAAAAAAAAAADQHMUoAAAAAAAAAACgOYpRAAAAAAAAAABAcxSjAAAAAAAAAACA5ihGAQAAAAAAAAAAzVGMAgAAAAAAAAAAmqMYBQAAAAAAAAAANEcxCgAAAAAAAAAAaI5iFAAAAAAAAAAA0BzFKAAAAAAAAAAAoDmKUQAAAAAAAAAAQHMUowAAAAAAAAAAgOYoRgEAAAAAAAAAAM1RjAIAAAAAAAAAAJqjGAUAAAAAAAAAADRHMQoAAAAAAAAAAGiOYhQAAAAAAAAAANAcxSgAAAAAAAAAAKA5ilEAAAAAAAAAAEBzFKMAAAAAAAAAAIDmKEYBAAAAAAAAAADNUYwCAAAAAAAAAACaoxgFAAAAAAAAAAA0RzEKAAAAAAAAAABojmIUAAAAAAAAAADQHMUoAAAAAAAAAACgOYpRAAAAAAAAAABAcxSjAAAAAAAAAACA5ihGAQAAAAAAAAAAzVGMAgAAAAAAAAAAmqMYBQAAAAAAAAAANEcxCgAAAAAAAAAAaI5iFAAAAAAAAAAA0BzFKAAAAAAAAAAAoDmKUQAAAAAAAAAAQHMUowAAAAAAAAAAgOYoRgEAAAAAAAAAAM1RjAIAAAAAAAAAAJqjGAUAAAAAAAAAADRHMQoAAAAAAAAAAGjO/wPOgnyZEbWvGgAAAABJRU5ErkJggg==" alt="오로지교육"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <div class="wordmark" style="display:none">오로지교육</div>
+    <h1>고객 관리 메시지</h1>
+    <p>상담부터 계약 관리까지, 고객 응대를 더 쉽고 효율적으로</p>
+  </div>
+
+  <div class="names">
+    <div class="fld"><label>🙋 내 이름</label><input id="oroji-agent" type="text" placeholder="홍길동" autocomplete="off"></div>
+    <div class="fld"><label>👤 고객 이름 <span style="font-weight:500;opacity:.7">(선택)</span></label><input id="oroji-client" type="text" placeholder="김영희" autocomplete="off"></div>
+  </div>
+  <p class="hint">내 이름은 자동 저장돼요 · 고객 이름을 비우면 '고객'으로 들어갑니다</p>
+
+  <div class="wrap">
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9d96b4" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="oroji-search" type="text" placeholder="멘트 검색 (예: 쾌유, 갱신, 감사)" autocomplete="off">
+    </div>
+    <div class="chips" id="oroji-chips"></div>
+    <div class="bar">
+      <span class="count" id="oroji-count"></span>
+      <button class="addbtn" id="oroji-add">＋ 내 멘트 직접 추가</button>
+    </div>
+    <div class="grid" id="oroji-grid"></div>
+  </div>
+
+  <div class="toast" id="oroji-toast"><span id="oroji-toast-txt">복사됐어요!</span></div>
+
+  <!-- 이미지 모달 -->
+  <div class="modal" id="oroji-modal">
+    <div class="sheet">
+      <h3>이렇게 전송돼요 👇</h3>
+      <img id="oroji-preview" alt="메시지 이미지 미리보기">
+      <div class="mbtns">
+        <button class="send" id="oroji-send"></button>
+        <button class="down" id="oroji-down">저장</button>
+      </div>
+      <button class="mclose" id="oroji-close">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ===================== 카카오 설정 =====================
+  // ▼▼▼ 카카오 개발자센터에서 발급받은 "JavaScript 키"를 따옴표 안에 붙여넣으세요 ▼▼▼
+  var KAKAO_JS_KEY="e23f79b371397f9ac59f6d416799c026";
+  try{ if(window.Kakao && KAKAO_JS_KEY && KAKAO_JS_KEY.indexOf("여기에")<0 && !Kakao.isInitialized()){ Kakao.init(KAKAO_JS_KEY); } }catch(e){}
+
+  // ===================== 멘트 데이터 =====================
+  var OROJI_TEMPLATES = [
+    // ---------- 생일 ----------
+    {cat:"생일", text:"{{고객}}님, 생신 진심으로 축하드립니다! 🎂\n늘 건강하시고 좋은 일만 가득한 한 해 되시길 바랍니다. - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님~ 오늘 생신이시죠? 🎉\n작년보다 더 건강하고 즐거운 한 해 되시길 응원합니다. - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 생일 축하드려요! 🎈\n오늘 하루만큼은 가장 행복한 주인공으로 보내세요. - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님의 특별한 날을 진심으로 축하드립니다. 🎁\n행복과 웃음이 가득하시길 바랍니다. - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 한 살 더 멋져지는 날이네요. 😊\n건강하고 풍성한 한 해 되세요! - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 생신 축하드려요. 🌸\n늘 곁에서 든든하게 챙겨드리는 담당자가 되겠습니다. - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 태어나 주셔서 감사한 날이에요. 💐\n올해도 좋은 일만 가득하시길 바랍니다! - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 생일 진심으로 축하드립니다! 🎊\n가족과 함께 따뜻한 하루 보내세요. - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 오늘은 {{고객}}님을 위한 날! 🥳\n맛있는 것 많이 드시고 행복하세요. - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 건강과 행운이 함께하는 한 해 되시길 바라며 생신을 축하드립니다. 🎂 - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 생일 축하드려요. 🎀\n늘 좋은 인연으로 함께해 주셔서 감사합니다. - {{설계사}} 드림"},
+    {cat:"생일", text:"{{고객}}님, 빛나는 생일 보내세요! ✨\n바라는 모든 일 이루어지는 한 해 되시길. - {{설계사}} 드림"},
+
+    // ---------- 명절 ----------
+    {cat:"명절", text:"{{고객}}님, 풍성한 한가위 보내세요. 🌕\n가족분들과 따뜻하고 행복한 시간 되시길 바랍니다. - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 새해 복 많이 받으세요! 🎍\n올 한 해도 건강과 행복이 가득하시길 기원합니다. - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 즐거운 추석 연휴 보내세요. 🍂\n보름달처럼 넉넉한 마음 가득하시길 바랍니다! - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 설 명절 잘 보내고 계신가요? 🧧\n가정에 건강과 복이 가득하길 바랍니다. - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 한 해 마무리 잘하시고 따뜻한 연말 보내세요. 🎄\n늘 감사했습니다. - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 풍성한 명절 되세요. 🌾\n오가는 길 안전 운전하시고 행복한 시간 보내세요. - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 새해에는 바라는 일 모두 이루시길 바랍니다. 🌅\n늘 응원하겠습니다. - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 추석 명절 건강하게 보내세요. 🥮\n늘 신경 써 주셔서 진심으로 감사합니다. - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 가족과 함께하는 따뜻한 명절 되세요. 🏡\n행복 가득한 연휴 보내시길 바랍니다! - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 다가오는 새해 건강과 행운이 함께하길 바랍니다. 🎊\n새해 복 많이 받으세요! - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 즐거운 명절 보내시고 푹 쉬어 가세요. 😊\n늘 든든하게 함께하겠습니다. - {{설계사}} 드림"},
+    {cat:"명절", text:"{{고객}}님, 올 한 해도 감사했습니다. 🎁\n행복한 연말 보내시고 새해엔 더 좋은 일만 가득하시길! - {{설계사}} 드림"},
+
+    // ---------- 갱신 안내 ----------
+    {cat:"갱신 안내", text:"{{고객}}님 안녕하세요, {{설계사}}입니다.\n보험 갱신 시점이 다가와 보장을 한번 점검해 드리려 해요. 편하신 시간 알려주세요. 😊 - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, {{설계사}}입니다.\n계약 갱신 안내드려요. 변경되는 부분만 간단히 설명드릴게요. 통화 가능 시간 회신 부탁드립니다. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 가입하신 보험의 갱신일이 곧 다가옵니다.\n보장 공백 없이 이어지도록 미리 챙겨드릴게요. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 갱신 전 보장 점검 한번 받아보시길 추천드려요.\n더 나은 조건이 있는지 확인해 드리겠습니다. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 보험 갱신 시기가 되어 연락드립니다.\n현재 보장과 보험료를 함께 살펴보고 정리해 드릴게요. 😊 - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, {{설계사}}입니다.\n갱신 안내차 연락드려요. 바쁘시면 편한 시간에 자료로 정리해 보내드리겠습니다. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 갱신을 앞두고 보장이 지금 상황에 잘 맞는지 점검이 필요해 보여요.\n시간 되실 때 말씀 주세요. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 가입 보험 갱신일이 한 달 앞으로 다가왔습니다.\n미리 안내드리니 궁금한 점 있으면 편히 연락 주세요. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 갱신 시 보험료 변동이 있을 수 있어 미리 알려드려요.\n부담 없이 상담받으실 수 있게 도와드리겠습니다. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 보장 갱신 관련해 안내드립니다.\n그동안 잘 유지해 주셔서 감사해요. 변경 사항 확인 후 연락드릴게요. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 갱신 시즌이라 한 번 더 챙겨드려요.\n현재 보장에 부족한 부분은 없는지 함께 점검해 봐요. - {{설계사}} 드림"},
+    {cat:"갱신 안내", text:"{{고객}}님, 갱신 안내드립니다.\n더 좋은 조건으로 보완할 수 있는지 검토해 깔끔하게 정리해 드리겠습니다. - {{설계사}} 드림"},
+
+    // ---------- 안부 (일반 + 쾌유) ----------
+    {cat:"안부", text:"{{고객}}님, 환절기인데 감기 조심하세요. 🍃\n문득 생각나 안부 여쭙니다. 도움 필요하면 언제든 연락 주세요. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 날씨가 부쩍 추워졌어요. ❄️\n건강 잘 챙기시고 좋은 한 주 보내세요! - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 오랜만에 인사드려요 :)\n잘 지내고 계시죠? 시간 되실 때 식사라도 한번 해요. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 요즘 무더위에 건강 상하지 않으셨나요? ☀️\n시원하게 잘 보내시길 바라요. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 미세먼지 심한 날엔 마스크 꼭 챙기세요. 😷\n늘 건강 살피시길 바랍니다. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 한 주도 고생 많으셨어요. 😊\n주말엔 푹 쉬시고 좋은 시간 보내세요! - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 입원 소식 듣고 많이 걱정됐어요. 🙏\n무리하지 마시고 편히 치료받으세요. 빠른 쾌유 빌게요. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 수술 잘 마치셨다니 정말 다행이에요. 💐\n회복이 우선이니 푹 쉬시고 건강 되찾으시길 바랍니다. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 치료받으시느라 고생 많으세요. 🍀\n곧 자리 털고 일어나실 거예요. 빠른 쾌유 진심으로 기원합니다. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 몸은 좀 어떠세요? 🙏\n마음까지 지치지 않으시도록 곁에서 응원할게요. 하루빨리 쾌차하시길 바랍니다. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 퇴원 후에도 무리하지 마시고 천천히 회복하세요. 🌿\n건강이 제일이에요. 늘 응원하겠습니다. - {{설계사}} 드림"},
+    {cat:"안부", text:"{{고객}}님, 쾌유를 빕니다. 💜\n필요하신 것 있으면 언제든 편히 말씀해 주세요. 건강하게 다시 뵙길 바랄게요. - {{설계사}} 드림"},
+
+    // ---------- 계약 축하 ----------
+    {cat:"계약 축하", text:"{{고객}}님, 소중한 인연으로 함께하게 되어 감사드립니다. 🙏\n끝까지 책임지고 든든하게 챙기겠습니다. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 현명한 결정 축하드려요! 👏\n오늘부터 보장이 시작되니 마음 놓으셔도 됩니다. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 믿고 맡겨 주셔서 진심으로 감사합니다. 💜\n든든한 보장으로 보답하겠습니다. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 가입 축하드려요! 🎉\n앞으로 보장 관련 궁금한 점은 언제든 편하게 물어보세요. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 오늘 좋은 선택 하셨어요. 😊\n평생 든든한 울타리가 되어 드리겠습니다. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 소중한 가족을 위한 현명한 준비 축하드립니다. 🏡\n끝까지 함께하겠습니다. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 계약 감사드려요. 🙏\n사후관리까지 꼼꼼하게 챙겨드리는 담당자가 되겠습니다. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 좋은 인연 맺게 되어 기쁩니다. 🌷\n보장 잘 받으실 수 있도록 든든히 지키겠습니다. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 가입 진심으로 축하드립니다! ✨\n필요할 때 가장 먼저 떠오르는 담당자가 될게요. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 오늘 준비하신 보장이 앞으로 큰 힘이 될 거예요. 💪\n늘 곁에서 챙기겠습니다. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 믿어 주신 만큼 정성껏 관리해 드리겠습니다. 🙏\n함께해 주셔서 감사해요. - {{설계사}} 드림"},
+    {cat:"계약 축하", text:"{{고객}}님, 계약 축하드리며 늘 건강하시길 바랍니다. 😊\n든든한 보장으로 보답할게요. - {{설계사}} 드림"},
+
+    // ---------- 소개 요청 ----------
+    {cat:"소개 요청", text:"{{고객}}님, 항상 믿어 주셔서 감사합니다. 😊\n주변에 보험 점검 필요하신 분 계시면 편하게 소개해 주세요. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님 덕분에 늘 힘이 납니다. 🙏\n지인 중 보장 분석 받아보고 싶은 분 있으면 알려 주세요. 부담 없이 도와드릴게요. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 혹시 보험으로 고민하는 지인이 계신가요? 🍀\n{{고객}}님 소개라면 더 정성껏 도와드리겠습니다. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 가족이나 친구분 중 보장 점검 필요하신 분 있으면 편하게 연결해 주세요.\n깔끔하게 정리만 도와드릴게요. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 늘 좋은 인연 감사합니다. 💜\n주변에 도움 필요하신 분 계시면 언제든 소개 부탁드려요. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님처럼 좋은 분을 한 분 더 만나고 싶어요. 😊\n소개해 주시면 정성껏 모시겠습니다. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 부담 갖지 마시고 가볍게 소개만 해 주셔도 돼요.\n상담은 제가 편하게 도와드릴게요. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 주변에 보험료가 부담되거나 보장이 궁금한 분 계시면 알려 주세요.\n무료로 점검해 드립니다. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 소개해 주신 분께는 더 꼼꼼하고 정직하게 상담해 드리겠습니다. 🙏\n늘 감사해요. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 사회생활 시작하는 자녀분이나 지인 있으면 보장 설계 도와드릴게요.\n편하게 말씀 주세요. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 좋은 정보는 나눌수록 좋잖아요. 😊\n도움 필요하신 분 있으면 부담 없이 연결해 주세요. - {{설계사}} 드림"},
+    {cat:"소개 요청", text:"{{고객}}님, 늘 응원해 주셔서 감사합니다. 💐\n주변에 상담 원하시는 분 계시면 정성을 다하겠습니다. - {{설계사}} 드림"}
+  ];
+
+  // 카테고리별 파스텔 색 (카드/태그) + 이미지 그라데이션/이모지
+  var CAT_META = {
+    "생일":      {bg:"#fff3e6", tagbg:"#ffe2c2", tagfg:"#e07b1a", g1:"#ffe7c7", g2:"#ffcb9e", emo:"🎂"},
+    "명절":      {bg:"#fff0f1", tagbg:"#ffd6da", tagfg:"#e34e63", g1:"#ffe0e6", g2:"#ffc0cf", emo:"🌕"},
+    "갱신 안내": {bg:"#eef7ff", tagbg:"#cfe6ff", tagfg:"#2f86d6", g1:"#dcefff", g2:"#bcddff", emo:"🔔"},
+    "안부":      {bg:"#eafaf0", tagbg:"#c6efd6", tagfg:"#1f9d61", g1:"#d8f7e5", g2:"#b6ecca", emo:"🍀"},
+    "계약 축하": {bg:"#fff6d9", tagbg:"#ffe7a0", tagfg:"#cf9a12", g1:"#fff2c2", g2:"#ffe092", emo:"🎉"},
+    "소개 요청": {bg:"#fdeeff", tagbg:"#f4d4fb", tagfg:"#b455c9", g1:"#f6ddff", g2:"#e6c2ff", emo:"🤝"}
+  };
+  function meta(cat){ return CAT_META[cat] || {bg:"#f3eeff",tagbg:"#e0d4ff",tagfg:"#7a5fe0",g1:"#ece2ff",g2:"#d4c2ff",emo:"💌"}; }
+  // 카카오톡 말풍선 아이콘(모달 노란버튼용 · 진한 단색)
+  var KAKAO_SVG='<svg viewBox="0 0 36 33" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 0C8.06 0 0 6.34 0 14.16c0 5.05 3.36 9.48 8.42 11.99-.27.96-1.7 5.9-1.76 6.29 0 0-.03.29.15.4.18.11.4.02.4.02.52-.07 6.04-3.96 7-4.64.58.08 1.18.12 1.79.12 9.94 0 18-6.34 18-14.16C36 6.34 27.94 0 18 0z" fill="#3A1D1D"/></svg>';
+  // 카카오톡 로고(노란 라운드 + 말풍선) · 카드 버튼용
+  var KAKAO_LOGO='<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="36" height="36" rx="10" fill="#FAE100"/><path d="M18 8.4c-5.36 0-9.7 3.43-9.7 7.66 0 2.74 1.82 5.14 4.55 6.49-.2.74-.72 2.7-.83 3.12-.13.52.19.51.4.37.16-.11 2.58-1.75 3.63-2.46.63.09 1.28.14 1.95.14 5.36 0 9.7-3.43 9.7-7.66S23.36 8.4 18 8.4z" fill="#3A1D1D"/></svg>';
+  // =====================================================
+
+  var $ = function(s){ return document.getElementById('oroji-msg-app').querySelector(s); };
+  var root = document.getElementById('oroji-msg-app');
+  var agentEl=$('#oroji-agent'), clientEl=$('#oroji-client'), searchEl=$('#oroji-search');
+  var chipsEl=$('#oroji-chips'), gridEl=$('#oroji-grid'), countEl=$('#oroji-count'), addEl=$('#oroji-add');
+  var toastEl=$('#oroji-toast'), toastTxt=$('#oroji-toast-txt');
+  var modalEl=$('#oroji-modal'), previewEl=$('#oroji-preview'), sendEl=$('#oroji-send'), downEl=$('#oroji-down'), closeEl=$('#oroji-close');
+  sendEl.innerHTML=KAKAO_SVG+'카톡으로 보내기';
+
+  var K_AGENT='oroji_agent_name', K_FAV='oroji_favs', K_OVR='oroji_overrides', K_CUS='oroji_customs';
+  var state={cat:'전체', q:''}, editingId=null, animNav=true;
+  function staggerIn(){ if(!animNav) return; animNav=false;
+    var cards=gridEl.querySelectorAll('.card');
+    for(var i=0;i<cards.length;i++){ cards[i].style.animationDelay=(Math.min(i,12)*0.035)+'s'; cards[i].classList.add('anim'); }
+  }
+  var curShare=null; // {blob, dataUrl}
+
+  function ls(k,d){ try{ return JSON.parse(localStorage.getItem(k)||d); }catch(e){ return JSON.parse(d); } }
+  function save(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+  try{ agentEl.value = localStorage.getItem(K_AGENT)||''; }catch(e){}
+  var favs=ls(K_FAV,'[]'), overrides=ls(K_OVR,'{}'), customs=ls(K_CUS,'[]');
+
+  // 기본 멘트에 안정적 id 부여
+  var defaults = OROJI_TEMPLATES.map(function(t,i){ return {id:'d'+i, cat:t.cat, def:t.text}; });
+  function allItems(){
+    var arr = defaults.map(function(d){ return {id:d.id, cat:d.cat, text:overrides[d.id]!=null?overrides[d.id]:d.def, isCustom:false, hasOvr:overrides[d.id]!=null}; });
+    customs.forEach(function(c){ arr.push({id:c.id, cat:c.cat, text:c.text, isCustom:true}); });
+    return arr;
+  }
+  var cats=['전체','⭐ 즐겨찾기'];
+  OROJI_TEMPLATES.forEach(function(t){ if(cats.indexOf(t.cat)<0) cats.push(t.cat); });
+  function realCats(){ return cats.filter(function(c){return c!=='전체'&&c!=='⭐ 즐겨찾기';}); }
+
+  function fill(text){
+    var a=(agentEl.value||'').trim()||'설계사', c=(clientEl.value||'').trim()||'고객';
+    return text.replace(/\{\{설계사\}\}/g,a).replace(/\{\{고객\}\}/g,c);
+  }
+  function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function hi(text){
+    var a=(agentEl.value||'').trim()||'설계사', c=(clientEl.value||'').trim()||'고객';
+    return esc(text).replace(/\{\{설계사\}\}/g,'<b>'+esc(a)+'</b>').replace(/\{\{고객\}\}/g,'<b>'+esc(c)+'</b>');
+  }
+
+  // ---------- 칩 ----------
+  function renderChips(){
+    chipsEl.innerHTML='';
+    cats.forEach(function(c){
+      var b=document.createElement('button');
+      b.className='chip'+(c===state.cat?' on':''); b.textContent=c;
+      b.onclick=function(){ state.cat=c; editingId=null; animNav=true; render(); };
+      chipsEl.appendChild(b);
+    });
+  }
+  function visible(){
+    var q=state.q.trim();
+    return allItems().filter(function(t){
+      if(state.cat==='⭐ 즐겨찾기'){ if(favs.indexOf(t.id)<0) return false; }
+      else if(state.cat!=='전체'){ if(t.cat!==state.cat) return false; }
+      if(q && t.text.indexOf(q)<0 && t.cat.indexOf(q)<0) return false;
+      return true;
+    });
+  }
+
+  // ---------- 렌더 ----------
+  var HOME_LIMIT=6; // 메인에서 카테고리별로 보여줄 개수
+
+  function render(){
+    renderChips();
+    var q=state.q.trim();
+    // 메인(전체 + 검색 없음): 카테고리별 가로 줄
+    if(state.cat==='전체' && !q && !editingId){
+      countEl.innerHTML='전체 멘트 <b>'+allItems().length+'</b>개';
+      renderHome(); return;
+    }
+    gridEl.className='grid';
+    var items=visible();
+    countEl.innerHTML = items.length ? '멘트 <b>'+items.length+'</b>개' : '';
+    gridEl.innerHTML='';
+    if(items.length===0){
+      var e=document.createElement('div'); e.className='empty';
+      e.innerHTML = state.cat==='⭐ 즐겨찾기'
+        ? '<span class="emoji">⭐</span>즐겨찾기한 멘트가 없어요.<br>카드의 ☆를 눌러 모아보세요.'
+        : '<span class="emoji">🔍</span>결과가 없어요.';
+      gridEl.appendChild(e); return;
+    }
+    items.forEach(function(t){ gridEl.appendChild(editingId===t.id ? editCard(t) : viewCard(t)); });
+    if(!editingId) staggerIn();
+    if(editingId){ var ta=gridEl.querySelector('textarea'); if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length,ta.value.length); } }
+  }
+
+  function renderHome(){
+    gridEl.className='home';
+    gridEl.innerHTML='';
+    realCats().forEach(function(cat){
+      var all=allItems().filter(function(t){ return t.cat===cat; });
+      if(!all.length) return;
+      var m=meta(cat);
+      var sec=document.createElement('div'); sec.className='section';
+      var head=document.createElement('div'); head.className='rowhead';
+      head.innerHTML='<span class="rt">'+m.emo+' '+esc(cat)+'</span>'+
+        '<button class="more">전체보기 ('+all.length+') ›</button>';
+      head.querySelector('.more').onclick=function(){ state.cat=cat; animNav=true; render(); scrollTopApp(); };
+      var row=document.createElement('div'); row.className='hrow';
+      all.slice(0,HOME_LIMIT).forEach(function(t){ row.appendChild(viewCard(t)); });
+      sec.appendChild(head); sec.appendChild(row); gridEl.appendChild(sec);
+    });
+    staggerIn();
+  }
+  function scrollTopApp(){ try{ root.scrollIntoView({behavior:'smooth',block:'start'}); }catch(e){} }
+
+  function viewCard(t){
+    var m=meta(t.cat), isFav=favs.indexOf(t.id)>=0;
+    var card=document.createElement('div'); card.className='card'; card.style.background='#fff'; card.style.borderColor=m.bg;
+    card.innerHTML=
+      '<div class="top"><span class="tag" style="background:'+m.tagbg+';color:'+m.tagfg+'">'+esc(t.cat)+'</span>'+
+      (t.isCustom?'<span class="mine">내 멘트</span>':(t.hasOvr?'<span class="mine">수정됨</span>':''))+
+      '<span class="star'+(isFav?' on':'')+'">'+(isFav?'★':'☆')+'</span></div>'+
+      '<div class="body">'+hi(t.text)+'</div>'+
+      '<div class="acts">'+
+        '<button class="btn-main">'+KAKAO_LOGO+'카톡 보내기</button>'+
+        '<div class="subrow"><button class="btn-ghost cp">복사</button><button class="btn-ghost ed">수정</button></div>'+
+      '</div>';
+    card.querySelector('.star').onclick=function(){ var i=favs.indexOf(t.id), nowFav; if(i>=0){favs.splice(i,1);nowFav=false;} else {favs.push(t.id);nowFav=true;} save(K_FAV,favs);
+      if(state.cat==='⭐ 즐겨찾기'){ render(); return; }
+      this.classList.toggle('on',nowFav); this.textContent=nowFav?'★':'☆';
+      if(nowFav){ this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop'); } };
+    card.querySelector('.btn-main').onclick=function(){ openImage(t); };
+    card.querySelector('.cp').onclick=function(){ var b=this; copyText(fill(t.text),function(){ b.classList.add('done'); b.textContent='복사됨 ✓'; toast('복사됐어요!'); setTimeout(function(){ b.classList.remove('done'); b.textContent='복사'; },1400); }); };
+    card.querySelector('.ed').onclick=function(){ editingId=t.id; render(); };
+    return card;
+  }
+
+  function editCard(t){
+    var m=meta(t.cat);
+    var card=document.createElement('div'); card.className='card edit'; card.style.background='#fff'; card.style.borderColor=m.bg;
+    card.innerHTML=
+      '<div class="top"><span class="tag" style="background:'+m.tagbg+';color:'+m.tagfg+'">'+esc(t.cat)+'</span></div>'+
+      '<textarea>'+esc(t.text)+'</textarea>'+
+      '<div class="erow">'+
+        '<button class="save">저장</button>'+
+        '<button class="cancel">취소</button>'+
+        (t.isCustom?'<button class="del">삭제</button>':(t.hasOvr?'<button class="reset">기본값</button>':''))+
+      '</div>'+
+      '<p class="ehint">{{고객}} {{설계사}} 는 전송할 때 입력한 이름으로 자동 변환돼요.</p>';
+    var ta=card.querySelector('textarea');
+    card.querySelector('.save').onclick=function(){
+      var val=ta.value.trim(); if(!val){ toast('내용을 입력해 주세요'); return; }
+      if(t.isCustom){ var c=customs.filter(function(x){return x.id===t.id;})[0]; if(c)c.text=val; save(K_CUS,customs); }
+      else{ var d=defaults.filter(function(x){return x.id===t.id;})[0]; if(d && val===d.def){ delete overrides[t.id]; } else { overrides[t.id]=val; } save(K_OVR,overrides); }
+      editingId=null; toast('저장됐어요!'); render();
+    };
+    card.querySelector('.cancel').onclick=function(){
+      if(t.isCustom && !t.text.trim()){ customs=customs.filter(function(x){return x.id!==t.id;}); save(K_CUS,customs); }
+      editingId=null; render();
+    };
+    var rb=card.querySelector('.reset'); if(rb) rb.onclick=function(){ delete overrides[t.id]; save(K_OVR,overrides); editingId=null; toast('기본 멘트로 되돌렸어요'); render(); };
+    var db=card.querySelector('.del'); if(db) db.onclick=function(){ customs=customs.filter(function(x){return x.id!==t.id;}); save(K_CUS,customs); var fi=favs.indexOf(t.id); if(fi>=0){favs.splice(fi,1);save(K_FAV,favs);} editingId=null; toast('삭제됐어요'); render(); };
+    return card;
+  }
+
+  // ---------- 멘트 추가 ----------
+  addEl.onclick=function(){
+    var cat = (state.cat!=='전체' && state.cat!=='⭐ 즐겨찾기') ? state.cat : realCats()[0];
+    var id='c'+Date.now()+Math.floor(Math.random()*1000);
+    customs.push({id:id, cat:cat, text:''}); save(K_CUS,customs);
+    state.cat=cat; editingId=id; render();
+    try{ root.querySelector('.grid').scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
+  };
+
+  // ---------- 이미지 카드 생성 ----------
+  function wrapLines(ctx,text,maxW){
+    var out=[]; text.split('\n').forEach(function(p){
+      if(p===''){ out.push(''); return; }
+      var line='';
+      p.split(' ').forEach(function(w){
+        // 한 단어가 줄보다 길면 글자 단위로 쪼갬
+        if(ctx.measureText(w).width>maxW){
+          if(line){ out.push(line); line=''; }
+          var cur='';
+          for(var i=0;i<w.length;i++){ var t=cur+w[i];
+            if(ctx.measureText(t).width>maxW && cur){ out.push(cur); cur=w[i]; } else cur=t; }
+          line=cur; return;
+        }
+        var test=line===''?w:line+' '+w;
+        if(ctx.measureText(test).width>maxW && line!==''){ out.push(line); line=w; }
+        else line=test;
+      });
+      if(line!=='') out.push(line);
+    });
+    return out;
+  }
+  function roundRect(ctx,x,y,w,h,r){ ctx.beginPath();
+    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  function drawCard(text,cat){
+    var m=meta(cat);
+    var W=1000, pad=64, inPad=74, fs=44, lh=70, emoH=140, footH=24;
+    var c=document.createElement('canvas'), ctx=c.getContext('2d');
+    ctx.font='600 '+fs+'px Pretendard,"Apple SD Gothic Neo",sans-serif';
+    var maxW=W-pad*2-inPad*2-16; // -16: 글자가 카드 가장자리에 닿지 않도록 안전 여백
+    var lines=wrapLines(ctx,text,maxW);
+    var innerH=inPad*2+emoH+lines.length*lh+footH;
+    var H=pad*2+innerH;
+    var s=2; c.width=W*s; c.height=H*s; ctx.scale(s,s);
+    // 배경 (라인 컬러 단색)
+    ctx.fillStyle='#ebe7f7'; roundRect(ctx,0,0,W,H,0); ctx.fill();
+    // 안쪽 흰 카드
+    ctx.fillStyle='#ffffff'; ctx.shadowColor='rgba(120,90,200,.18)'; ctx.shadowBlur=40; ctx.shadowOffsetY=12;
+    roundRect(ctx,pad,pad,W-pad*2,H-pad*2,50); ctx.fill(); ctx.shadowColor='transparent';
+    // 이모지
+    ctx.font='90px serif'; ctx.textAlign='center'; ctx.fillText(m.emo, W/2, pad+inPad+78);
+    // 본문
+    ctx.font='600 '+fs+'px Pretendard,"Apple SD Gothic Neo",sans-serif'; ctx.fillStyle='#4a4458'; ctx.textAlign='left';
+    var ty=pad+inPad+emoH+44, tx=pad+inPad;
+    lines.forEach(function(ln){ ctx.fillText(ln, tx, ty); ty+=lh; });
+    return c;
+  }
+
+  function openImage(t){
+    var draw=function(){
+      var canvas=drawCard(fill(t.text), t.cat);
+      canvas.toBlob(function(blob){
+        if(curShare && curShare.url) URL.revokeObjectURL(curShare.url);
+        var url=URL.createObjectURL(blob);
+        curShare={blob:blob, url:url, name:'oroji-message.png', text:fill(t.text)};
+        previewEl.src=url; modalEl.classList.add('show');
+      },'image/png');
+    };
+    // 캔버스 글자 잘림 방지: 본문에 쓰는 Pretendard 굵기를 먼저 확실히 로딩한 뒤 그림
+    if(document.fonts && document.fonts.load){
+      Promise.all([
+        document.fonts.load('600 44px Pretendard'),
+        document.fonts.load('700 44px Pretendard')
+      ]).then(function(){ return document.fonts.ready; }).then(draw, draw);
+    } else if(document.fonts && document.fonts.ready){ document.fonts.ready.then(draw, draw); }
+    else draw();
+  }
+  function isInAppBrowser(){
+    var ua=(navigator.userAgent||'');
+    return /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER|DaumApps|Snapchat|Band|; wv\)/i.test(ua);
+  }
+  function kakaoReady(){ return !!(window.Kakao && Kakao.isInitialized && Kakao.isInitialized()); }
+  // 미리보기 열릴 때 카카오 이미지서버에 미리 업로드(전송 클릭 시 사용자 제스처 유지)
+  function kakaoPreUpload(){
+    if(!kakaoReady() || !curShare) return;
+    var snap=curShare; snap.kakaoUrl=null;
+    var file=new File([snap.blob], snap.name, {type:'image/png'});
+    Kakao.Share.uploadImage({file:[file]}).then(function(res){
+      if(curShare===snap){ snap.kakaoUrl=(res&&res.infos&&res.infos.original&&res.infos.original.url)||null; }
+    }).catch(function(){});
+  }
+  function kakaoSend(){
+    var msg=(curShare.text||'오로지교육에서 보내는 메시지입니다.');
+    var link={ mobileWebUrl:location.href, webUrl:location.href };
+    if(curShare.kakaoUrl){
+      // 이미지 카드까지 함께 전송 (이미지 업로드 완료된 경우)
+      Kakao.Share.sendDefault({
+        objectType:'feed',
+        content:{ title:'오로지교육 고객 메시지', description:msg.slice(0,190), imageUrl:curShare.kakaoUrl, link:link }
+      });
+    } else {
+      // 이미지 준비 전이어도 친구 선택창은 즉시 열고 메시지 텍스트로 전송
+      Kakao.Share.sendDefault({ objectType:'text', text:msg, link:link });
+    }
+    modalEl.classList.remove('show');
+  }
+  sendEl.onclick=function(){
+    if(!curShare) return;
+    // 메시지 카드 이미지'만' 깔끔하게 전송 (카톡에 사진으로 첨부)
+    // ※ 카카오 SDK 바로보내기는 항상 링크+잘린 썸네일 카드로만 전송되어, 순수 이미지는 파일 공유로 보냄
+    var file=new File([curShare.blob], curShare.name, {type:'image/png'});
+    var canFiles = (navigator.canShare && navigator.canShare({files:[file]}));
+    if(navigator.share && canFiles){
+      navigator.share({files:[file]})
+        .then(function(){ modalEl.classList.remove('show'); })
+        .catch(function(){ /* 취소 등 무시 */ });
+    } else if(isInAppBrowser()){
+      toast('앱 안에서 열면 사진 전송이 막혀요. 우측 ⋮(또는 ⋯)메뉴 → "다른 브라우저로 열기" 후 다시 눌러주세요');
+    } else {
+      downImg(); toast('이미지를 저장했어요. 카톡에서 사진 첨부로 보내주세요');
+    }
+  };
+  downEl.onclick=function(){ downImg(); };
+  function downImg(){ if(!curShare) return; var a=document.createElement('a'); a.href=curShare.url; a.download=curShare.name; a.click(); toast('이미지를 저장했어요'); }
+  closeEl.onclick=function(){ modalEl.classList.remove('show'); };
+  modalEl.onclick=function(e){ if(e.target===modalEl) modalEl.classList.remove('show'); };
+
+  // ---------- 복사 ----------
+  function copyText(str,cb){
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(str).then(cb,function(){legacy(str,cb);}); }
+    else legacy(str,cb);
+  }
+  function legacy(str,cb){ var ta=document.createElement('textarea'); ta.value=str; ta.style.position='fixed'; ta.style.top='-9999px';
+    document.body.appendChild(ta); ta.focus(); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); cb&&cb(); }
+
+  var tT;
+  function toast(msg){ toastTxt.textContent=msg||'완료'; toastEl.classList.add('show'); clearTimeout(tT); tT=setTimeout(function(){ toastEl.classList.remove('show'); },1700); }
+
+  // ---------- 입력 ----------
+  agentEl.oninput=function(){ try{ localStorage.setItem(K_AGENT, agentEl.value.trim()); }catch(e){} render(); };
+  clientEl.oninput=function(){ render(); };
+  searchEl.oninput=function(){ state.q=searchEl.value; editingId=null; render(); };
+
+  render();
+})();
+</script>
+
+</body>
+</html>
