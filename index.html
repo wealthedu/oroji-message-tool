@@ -547,27 +547,39 @@
   function isInAppBrowser(){
     return /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER|DaumApps|Band|; wv\)/i.test(navigator.userAgent||'');
   }
+  function isMobile(){ return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||''); }
 
-  // ---------- 카톡 텍스트 바로 전송 (버튼 클릭 → 친구 선택창 즉시) ----------
-  // btn 클릭이라는 user gesture 안에서 sendDefault 를 동기 호출해야 팝업이 차단되지 않는다.
+  // ---------- 카톡 텍스트 전송 (버튼 클릭 → 친구 선택창 즉시) ----------
+  // 카카오 공유 API 는 링크가 필수다. 그 링크(자세히 보기)를 툴이 아니라
+  // "메시지를 이미지 카드로 보여주는 페이지(m.html)"로 돌려서, 고객이 눌러도 툴은 노출되지 않게 한다.
+  // 본문(text)은 그대로 텍스트 말풍선으로 전달된다. 카카오 text 템플릿은 200자 제한.
+  function cardUrl(msg){
+    var dir=(location.origin+location.pathname).replace(/[^\/]*$/,''); // 현재 폴더 (…/oroji-message-tool/)
+    var enc; try{ enc=btoa(unescape(encodeURIComponent(msg))); }catch(e){ enc=encodeURIComponent(msg); }
+    return dir+'m.html#'+enc;
+  }
   function sendText(msg){
     if(!msg) return;
-    // (A) 200자 초과 → 잘린 메시지가 고객에게 가는 것이 최악이므로 전송을 막고 복사로 우회
+    // (A) 200자 초과 → 카카오 text 한도 초과. 잘려 나가면 최악이라 복사로 우회.
     if(msg.length>KAKAO_TEXT_MAX){
       copyText(msg,function(){ toast(KAKAO_TEXT_MAX+'자 초과라 복사했어요! 카톡에 붙여넣어 보내주세요'); });
       return;
     }
-    // (B) 카카오 → 친구(채팅) 선택창이 바로 열리고, 링크·버튼 없는 순수 텍스트 말풍선으로 전송
+    // (B) 카카오 → 친구(채팅) 선택창 즉시. 링크는 m.html(메시지 이미지 카드)로 연결.
     if(canUseKakao()){
-      try{ Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{} }); return; }catch(e){}
+      try{
+        var url=cardUrl(msg);
+        Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{ webUrl:url, mobileWebUrl:url } });
+        return;
+      }catch(e){}
     }
-    // (C) OS 공유시트 → 카톡 선택 (순수 텍스트, 길이 제한 없음)
-    if(navigator.share && !isInAppBrowser()){
+    // (C) 폴백: 모바일 OS 공유시트 (순수 텍스트)
+    if(isMobile() && navigator.share && !isInAppBrowser()){
       navigator.share({text:msg}).catch(function(){ /* 사용자 취소 등 무시 */ });
       return;
     }
     // (D) 최종 폴백: 클립보드 복사
-    copyText(msg,function(){ toast('메시지를 복사했어요! 카톡에 붙여넣어 보내주세요'); });
+    copyText(msg,function(){ toast('메시지를 복사했어요! 카톡 대화창에 붙여넣기 하세요'); });
   }
 
   sendEl.onclick=function(){

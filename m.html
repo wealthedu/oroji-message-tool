@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>메시지</title>
+<meta property="og:title" content="메시지가 도착했어요">
+<meta property="og:description" content="">
+<meta name="robots" content="noindex">
+<style>
+  html,body{margin:0;padding:0;background:#efeaf7;-webkit-text-size-adjust:100%;}
+  body{min-height:100vh;box-sizing:border-box;padding:24px 16px;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;
+       font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;}
+  .wrap{width:100%;max-width:520px;}
+  canvas{width:100%;height:auto;display:block;border-radius:26px;
+         box-shadow:0 20px 55px rgba(58,29,93,.24);}
+  .hint{margin:14px 0 0;text-align:center;font-size:12.5px;color:#8a79ba;opacity:.85;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <canvas id="c" role="img" aria-label="메시지 카드"></canvas>
+    <p class="hint">이미지를 길게 눌러 저장할 수 있어요</p>
+  </div>
+<script>
+(function(){
+  // ---- URL(해시)에서 메시지 복원 : index.html cardUrl() 과 짝 ----
+  function decodeMsg(){
+    var h = location.hash ? location.hash.slice(1) : '';
+    if(!h) return '';
+    try{ return decodeURIComponent(escape(atob(h))); }        // base64(UTF-8)
+    catch(e){ try{ return decodeURIComponent(h); }catch(e2){ return h; } }
+  }
+  var msg = decodeMsg();
+
+  var canvas = document.getElementById('c');
+  var ctx = canvas.getContext('2d');
+  var DPR = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+
+  // ---- 레이아웃(논리 px) ----
+  var W=520, padOut=24, padIn=38;
+  var quoteH=44, fontSize=27, lineH=43, gapFooter=22, footerLH=20;
+  var bodyFont='600 '+fontSize+'px -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+
+  function wrap(text,maxW){
+    ctx.font=bodyFont;
+    var out=[];
+    String(text).split('\n').forEach(function(p){
+      if(p===''){ out.push(''); return; }
+      var line='';
+      for(var i=0;i<p.length;i++){
+        var t=line+p[i];
+        if(ctx.measureText(t).width>maxW && line!==''){ out.push(line); line=p[i]; }
+        else line=t;
+      }
+      out.push(line);
+    });
+    return out;
+  }
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  var maxTextW = W - padOut*2 - padIn*2;
+  var lines = wrap(msg, maxTextW);
+  var bodyH = Math.max(lineH, lines.length*lineH);
+  var cardH = padIn + quoteH + bodyH + gapFooter + footerLH + padIn;
+  var H = padOut*2 + cardH;
+
+  // ---- 캔버스 (고해상도) ----
+  canvas.width = W*DPR; canvas.height = H*DPR;
+  ctx.scale(DPR,DPR);
+
+  // 배경 : 딥퍼플 그라데이션
+  var g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#5b3aa6'); g.addColorStop(1,'#38215c');
+  ctx.fillStyle=g; roundRect(0,0,W,H,30); ctx.fill();
+
+  // 흰 카드
+  ctx.fillStyle='#ffffff';
+  roundRect(padOut,padOut, W-padOut*2, cardH, 22); ctx.fill();
+
+  var cx = padOut+padIn;
+  var top = padOut+padIn;
+
+  // 따옴표 장식
+  ctx.fillStyle='#e6dcff';
+  ctx.font='800 66px Georgia, "Times New Roman", serif';
+  ctx.textBaseline='top';
+  ctx.fillText('“', cx-6, top-20);
+
+  // 본문
+  ctx.fillStyle='#2c2140';
+  ctx.font=bodyFont;
+  ctx.textBaseline='top';
+  var ty = top + quoteH;
+  for(var i=0;i<lines.length;i++){ ctx.fillText(lines[i], cx, ty+i*lineH); }
+
+  // 푸터(연한 브랜드)
+  ctx.fillStyle='#b3a4d8';
+  ctx.font='600 15px -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  ctx.textBaseline='top';
+  ctx.fillText('오로지교육', cx, ty + bodyH + gapFooter);
+})();
+</script>
+</body>
+</html>
