@@ -11,7 +11,7 @@
 <!-- ============================================================
   오로지교육 · 고객 접촉 문자함 (MVP v5)
   - 카테고리별 멘트 12개 + 안부에 쾌유(입원/수술/치료) 메시지
-  - 예쁜 이미지 카드 생성 → 카톡(공유시트) 전송 / 이미지 저장
+  - 메시지 텍스트를 카톡 친구 선택창으로 바로 전송 / 복사
   - 사용자가 멘트 수정·추가·삭제 가능 (브라우저 저장)
   아임웹 [코드 삽입] 블록에 통째로 붙여넣어 사용하세요.
   멘트 추가/수정은 아래 OROJI_TEMPLATES 배열을 고치거나, 화면에서 직접 편집하세요.
@@ -82,35 +82,35 @@
     #oroji-msg-app .home{display:block}
     #oroji-msg-app .section{margin-bottom:20px}
     #oroji-msg-app .rowhead{display:flex;align-items:center;justify-content:space-between;margin:0 2px 10px}
-    #oroji-msg-app .rowhead .rt{font-size:14.5px;font-weight:800;color:#3a3340;display:flex;align-items:center;gap:6px}
-    #oroji-msg-app .rowhead .more{font-size:12px;color:var(--brand-deep);font-weight:700;background:none;border:0;cursor:pointer;font-family:inherit;padding:4px 2px;display:flex;align-items:center;gap:2px}
+    #oroji-msg-app .rowhead .rt{font-size:15.5px;font-weight:800;color:#3a3340;display:flex;align-items:center;gap:6px}
+    #oroji-msg-app .rowhead .more{font-size:12.5px;color:var(--brand-deep);font-weight:700;background:none;border:0;cursor:pointer;font-family:inherit;padding:4px 2px;display:flex;align-items:center;gap:2px}
     #oroji-msg-app .hrow{display:flex;gap:11px;overflow-x:auto;padding:2px 2px 9px;-ms-overflow-style:none;scrollbar-width:none;scroll-snap-type:x mandatory}
     #oroji-msg-app .hrow::-webkit-scrollbar{display:none}
-    #oroji-msg-app .hrow .card{flex:0 0 210px;scroll-snap-align:start}
+    #oroji-msg-app .hrow .card{flex:0 0 236px;scroll-snap-align:start}
 
     /* 카드 그리드(2열) */
     #oroji-msg-app .grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-    #oroji-msg-app .card{border-radius:18px;padding:13px 13px 12px;border:1.5px solid rgba(109,91,224,.06);
-      box-shadow:0 5px 16px rgba(139,124,246,.12);display:flex;flex-direction:column;transition:.15s}
-    #oroji-msg-app .card .top{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-    #oroji-msg-app .tag{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;letter-spacing:.2px}
+    #oroji-msg-app .card{border-radius:20px;padding:16px 15px 14px;border:1.5px solid rgba(109,91,224,.06);
+      box-shadow:0 6px 18px rgba(139,124,246,.13);display:flex;flex-direction:column;transition:.15s}
+    #oroji-msg-app .card .top{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+    #oroji-msg-app .tag{font-size:12px;font-weight:800;padding:4px 12px;border-radius:999px;letter-spacing:.2px}
     #oroji-msg-app .mine{font-size:9px;font-weight:800;color:#fff;background:#b6a8e8;padding:2px 6px;border-radius:6px;margin-left:3px}
-    #oroji-msg-app .star{margin-left:auto;cursor:pointer;font-size:17px;line-height:1;color:#cdbfd6;user-select:none;transition:.15s}
+    #oroji-msg-app .star{margin-left:auto;cursor:pointer;font-size:19px;line-height:1;color:#cdbfd6;user-select:none;transition:.15s}
     #oroji-msg-app .star:active{transform:scale(1.25)}
     #oroji-msg-app .star.on{color:var(--gold)}
-    #oroji-msg-app .body{font-size:12.7px;white-space:pre-wrap;word-break:keep-all;overflow-wrap:break-word;color:#5b5263;line-height:1.6;flex:1}
+    #oroji-msg-app .body{font-size:13.6px;white-space:pre-wrap;word-break:keep-all;overflow-wrap:break-word;color:#5b5263;line-height:1.65;flex:1}
     #oroji-msg-app .body b{color:var(--brand-deep);font-weight:800}
 
     /* 액션 */
-    #oroji-msg-app .acts{margin-top:11px;display:flex;flex-direction:column;gap:6px}
-    #oroji-msg-app .btn-main{width:100%;border:0;border-radius:11px;background:var(--calm);color:#fff;
-      font-size:12.5px;font-weight:700;padding:10px;cursor:pointer;transition:.15s;font-family:inherit;
-      display:flex;align-items:center;justify-content:center;gap:6px}
-    #oroji-msg-app .btn-main:active{transform:scale(.97);background:#9489e6}
-    #oroji-msg-app .btn-main svg{width:18px;height:18px;flex:0 0 auto;border-radius:5px}
-    #oroji-msg-app .subrow{display:flex;gap:6px}
-    #oroji-msg-app .btn-ghost{flex:1;background:rgba(255,255,255,.7);border:1px solid rgba(109,91,224,.12);color:#7d7390;
-      border-radius:9px;padding:7px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+    #oroji-msg-app .acts{margin-top:13px;display:flex;flex-direction:column;gap:8px}
+    #oroji-msg-app .btn-main{width:100%;border:0;border-radius:14px;background:linear-gradient(135deg,#a78bfa 0%,#8b7cf6 100%);color:#fff;
+      font-size:14px;font-weight:700;padding:13px;cursor:pointer;transition:.15s;font-family:inherit;
+      box-shadow:0 5px 14px rgba(139,124,246,.32);display:flex;align-items:center;justify-content:center;gap:7px}
+    #oroji-msg-app .btn-main:active{transform:scale(.97);background:linear-gradient(135deg,#9a7bf5 0%,#7d6bf0 100%)}
+    #oroji-msg-app .btn-main svg{width:20px;height:20px;flex:0 0 auto;border-radius:6px}
+    #oroji-msg-app .subrow{display:flex;gap:7px}
+    #oroji-msg-app .btn-ghost{flex:1;background:#fff;border:1px solid rgba(109,91,224,.14);color:#7d7390;
+      border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
     #oroji-msg-app .btn-ghost:active{transform:scale(.96)}
     #oroji-msg-app .btn-ghost.done{background:#dff5ea;border-color:#bfe9d4;color:#1f9d61}
 
@@ -137,13 +137,20 @@
       transition:.28s cubic-bezier(.2,.8,.2,1);z-index:99999;box-shadow:0 10px 30px rgba(74,63,85,.32);display:flex;align-items:center;gap:8px;max-width:88%;text-align:center}
     #oroji-msg-app .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-    /* 이미지 미리보기 모달 */
+    /* 전송 미리보기 모달 */
     #oroji-msg-app .modal{position:fixed;inset:0;background:rgba(40,33,58,.55);backdrop-filter:blur(3px);
       display:none;align-items:center;justify-content:center;z-index:99998;padding:20px}
     #oroji-msg-app .modal.show{display:flex}
     #oroji-msg-app .sheet{background:var(--line);border-radius:22px;padding:16px;width:100%;max-width:360px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
     #oroji-msg-app .sheet h3{font-size:15px;font-weight:800;text-align:center;margin-bottom:12px;color:var(--text)}
-    #oroji-msg-app .sheet img{width:100%;border-radius:14px;display:block;box-shadow:0 6px 18px rgba(139,124,246,.2)}
+    #oroji-msg-app .sheet .preview{background:#9bbbd4;border-radius:14px;padding:16px 12px;max-height:52vh;overflow:auto;display:flex;justify-content:flex-end}
+    #oroji-msg-app .sheet .bubble{background:#fef01b;border-radius:16px 4px 16px 16px;padding:11px 13px;font-size:14px;line-height:1.62;color:#191600;white-space:pre-wrap;word-break:break-word;max-width:86%;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+    #oroji-msg-app .pcount{font-size:12px;text-align:right;margin:7px 3px 0;color:#8a83a6;font-weight:600}
+    #oroji-msg-app .pcount.warn{color:#d1801f}
+    #oroji-msg-app .pcount.over{color:#e0344b;font-weight:800}
+    #oroji-msg-app .phint{display:none;margin:9px 2px 0;padding:9px 11px;border-radius:10px;background:#fff6d9;
+      border:1px solid #ffe7a0;color:#8a6a12;font-size:11.8px;line-height:1.5;font-weight:600}
+    #oroji-msg-app .phint.show{display:block}
     #oroji-msg-app .mbtns{display:flex;gap:8px;margin-top:14px}
     #oroji-msg-app .mbtns button{flex:1;border:0;border-radius:12px;padding:12px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;transition:.15s}
     #oroji-msg-app .mbtns .send{background:#fee500;color:#3a1d1d;box-shadow:0 6px 16px rgba(254,229,0,.4);display:flex;align-items:center;justify-content:center;gap:6px}
@@ -202,14 +209,16 @@
 
   <div class="toast" id="oroji-toast"><span id="oroji-toast-txt">복사됐어요!</span></div>
 
-  <!-- 이미지 모달 -->
+  <!-- 전송 미리보기 모달 -->
   <div class="modal" id="oroji-modal">
     <div class="sheet">
       <h3>이렇게 전송돼요 👇</h3>
-      <img id="oroji-preview" alt="메시지 이미지 미리보기">
+      <div class="preview"><div class="bubble" id="oroji-preview"></div></div>
+      <div class="pcount" id="oroji-pcount"></div>
+      <div class="phint" id="oroji-phint"></div>
       <div class="mbtns">
         <button class="send" id="oroji-send"></button>
-        <button class="down" id="oroji-down">저장</button>
+        <button class="down" id="oroji-down">복사</button>
       </div>
       <button class="mclose" id="oroji-close">닫기</button>
     </div>
@@ -222,6 +231,14 @@
   // ▼▼▼ 카카오 개발자센터에서 발급받은 "JavaScript 키"를 따옴표 안에 붙여넣으세요 ▼▼▼
   var KAKAO_JS_KEY="e23f79b371397f9ac59f6d416799c026";
   try{ if(window.Kakao && KAKAO_JS_KEY && KAKAO_JS_KEY.indexOf("여기에")<0 && !Kakao.isInitialized()){ Kakao.init(KAKAO_JS_KEY); } }catch(e){}
+
+  // ★ 카카오 개발자센터 > 앱 > 플랫폼 > Web > 사이트 도메인 에 등록한 host 와 정확히 일치시킬 것.
+  //   여기 없는 host 에서는 친구 선택창을 아예 시도하지 않고 공유시트/복사로 폴백한다.
+  //   (도메인을 옮기거나 아임웹에 삽입할 때 이 배열을 갱신하지 않으면 카톡 전송이 조용히 폴백된다)
+  var ALLOWED_HOSTS = [ "oroji-tool.netlify.app" ];
+
+  // 카카오 텍스트 템플릿 본문 상한. 초과분은 잘려서 전송되므로 넘기면 전송을 막는다.
+  var KAKAO_TEXT_MAX = 200;
 
   // ===================== 멘트 데이터 =====================
   var OROJI_TEMPLATES = [
@@ -332,6 +349,7 @@
   var chipsEl=$('#oroji-chips'), gridEl=$('#oroji-grid'), countEl=$('#oroji-count'), addEl=$('#oroji-add');
   var toastEl=$('#oroji-toast'), toastTxt=$('#oroji-toast-txt');
   var modalEl=$('#oroji-modal'), previewEl=$('#oroji-preview'), sendEl=$('#oroji-send'), downEl=$('#oroji-down'), closeEl=$('#oroji-close');
+  var pcountEl=$('#oroji-pcount'), hintEl=$('#oroji-phint');
   sendEl.innerHTML=KAKAO_SVG+'카톡으로 보내기';
 
   var K_AGENT='oroji_agent_name', K_FAV='oroji_favs', K_OVR='oroji_overrides', K_CUS='oroji_customs';
@@ -340,7 +358,7 @@
     var cards=gridEl.querySelectorAll('.card');
     for(var i=0;i<cards.length;i++){ cards[i].style.animationDelay=(Math.min(i,12)*0.035)+'s'; cards[i].classList.add('anim'); }
   }
-  var curShare=null; // {blob, dataUrl}
+  var curShare=null; // {text}
 
   function ls(k,d){ try{ return JSON.parse(localStorage.getItem(k)||d); }catch(e){ return JSON.parse(d); } }
   function save(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -452,7 +470,7 @@
       if(state.cat==='⭐ 즐겨찾기'){ render(); return; }
       this.classList.toggle('on',nowFav); this.textContent=nowFav?'★':'☆';
       if(nowFav){ this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop'); } };
-    card.querySelector('.btn-main').onclick=function(){ openImage(t); };
+    card.querySelector('.btn-main').onclick=function(){ sendText(fill(t.text)); };
     card.querySelector('.cp').onclick=function(){ var b=this; copyText(fill(t.text),function(){ b.classList.add('done'); b.textContent='복사됨 ✓'; toast('복사됐어요!'); setTimeout(function(){ b.classList.remove('done'); b.textContent='복사'; },1400); }); };
     card.querySelector('.ed').onclick=function(){ editingId=t.id; render(); };
     return card;
@@ -495,122 +513,104 @@
     try{ root.querySelector('.grid').scrollIntoView({behavior:'smooth',block:'center'}); }catch(e){}
   };
 
-  // ---------- 이미지 카드 생성 ----------
-  function wrapLines(ctx,text,maxW){
-    var out=[]; text.split('\n').forEach(function(p){
-      if(p===''){ out.push(''); return; }
-      var line='';
-      p.split(' ').forEach(function(w){
-        // 한 단어가 줄보다 길면 글자 단위로 쪼갬
-        if(ctx.measureText(w).width>maxW){
-          if(line){ out.push(line); line=''; }
-          var cur='';
-          for(var i=0;i<w.length;i++){ var t=cur+w[i];
-            if(ctx.measureText(t).width>maxW && cur){ out.push(cur); cur=w[i]; } else cur=t; }
-          line=cur; return;
-        }
-        var test=line===''?w:line+' '+w;
-        if(ctx.measureText(test).width>maxW && line!==''){ out.push(line); line=w; }
-        else line=test;
-      });
-      if(line!=='') out.push(line);
-    });
-    return out;
+  // ---------- 전송 미리보기 ----------
+  function updateCount(len){
+    pcountEl.textContent=len+' / '+KAKAO_TEXT_MAX+'자';
+    pcountEl.className='pcount'+(len>KAKAO_TEXT_MAX?' over':(len>KAKAO_TEXT_MAX-20?' warn':''));
   }
-  function roundRect(ctx,x,y,w,h,r){ ctx.beginPath();
-    ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
-    ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function showHint(msg){ hintEl.textContent=msg; hintEl.classList.add('show'); }
+  function hideHint(){ hintEl.classList.remove('show'); hintEl.textContent=''; }
 
-  function drawCard(text,cat){
-    var m=meta(cat);
-    var W=1000, pad=64, inPad=74, fs=44, lh=70, emoH=140, footH=24;
-    var c=document.createElement('canvas'), ctx=c.getContext('2d');
-    ctx.font='600 '+fs+'px Pretendard,"Apple SD Gothic Neo",sans-serif';
-    var maxW=W-pad*2-inPad*2-16; // -16: 글자가 카드 가장자리에 닿지 않도록 안전 여백
-    var lines=wrapLines(ctx,text,maxW);
-    var innerH=inPad*2+emoH+lines.length*lh+footH;
-    var H=pad*2+innerH;
-    var s=2; c.width=W*s; c.height=H*s; ctx.scale(s,s);
-    // 배경 (라인 컬러 단색)
-    ctx.fillStyle='#ebe7f7'; roundRect(ctx,0,0,W,H,0); ctx.fill();
-    // 안쪽 흰 카드
-    ctx.fillStyle='#ffffff'; ctx.shadowColor='rgba(120,90,200,.18)'; ctx.shadowBlur=40; ctx.shadowOffsetY=12;
-    roundRect(ctx,pad,pad,W-pad*2,H-pad*2,50); ctx.fill(); ctx.shadowColor='transparent';
-    // 이모지
-    ctx.font='90px serif'; ctx.textAlign='center'; ctx.fillText(m.emo, W/2, pad+inPad+78);
-    // 본문
-    ctx.font='600 '+fs+'px Pretendard,"Apple SD Gothic Neo",sans-serif'; ctx.fillStyle='#4a4458'; ctx.textAlign='left';
-    var ty=pad+inPad+emoH+44, tx=pad+inPad;
-    lines.forEach(function(ln){ ctx.fillText(ln, tx, ty); ty+=lh; });
-    return c;
+  function openSend(t){
+    curShare={ text: fill(t.text) };
+    previewEl.textContent=curShare.text;   // textContent라 줄바꿈 유지 + HTML 주입 방지
+    updateCount(curShare.text.length);     // 이모지는 2로 세지만(보수적) 기본 멘트가 60~110자라 여유가 큼
+    hideHint();
+    modalEl.classList.add('show');
   }
 
-  function openImage(t){
-    var draw=function(){
-      var canvas=drawCard(fill(t.text), t.cat);
-      canvas.toBlob(function(blob){
-        if(curShare && curShare.url) URL.revokeObjectURL(curShare.url);
-        var url=URL.createObjectURL(blob);
-        curShare={blob:blob, url:url, name:'oroji-message.png', text:fill(t.text)};
-        previewEl.src=url; modalEl.classList.add('show');
-      },'image/png');
-    };
-    // 캔버스 글자 잘림 방지: 본문에 쓰는 Pretendard 굵기를 먼저 확실히 로딩한 뒤 그림
-    if(document.fonts && document.fonts.load){
-      Promise.all([
-        document.fonts.load('600 44px Pretendard'),
-        document.fonts.load('700 44px Pretendard')
-      ]).then(function(){ return document.fonts.ready; }).then(draw, draw);
-    } else if(document.fonts && document.fonts.ready){ document.fonts.ready.then(draw, draw); }
-    else draw();
+  function kakaoReady(){ return !!(window.Kakao && Kakao.isInitialized && Kakao.isInitialized() && Kakao.Share); }
+  // 카카오는 개발자센터에 등록된 도메인에서만 친구 선택창을 열어준다. file:// 은 항상 거부된다.
+  // 미등록 host 에서 sendDefault 를 부르면 팝업 안에서 조용히 실패하므로, 아예 시도하지 않는 편이 안전하다.
+  // "https://Site.netlify.app/" 처럼 적어도 동작하도록 host 만 남기고 소문자로 맞춘다
+  function normHost(s){ return String(s).trim().toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,''); }
+  function isKakaoAllowedEnv(){
+    var h=(location.hostname||'').toLowerCase();
+    if(h==='localhost' || h==='127.0.0.1') return true;
+    if(location.protocol!=='https:') return false;   // file:// · http:// 는 카카오가 거부한다
+    for(var i=0;i<ALLOWED_HOSTS.length;i++){ if(normHost(ALLOWED_HOSTS[i])===h) return true; }
+    return false;
   }
+  function canUseKakao(){ return kakaoReady() && isKakaoAllowedEnv(); }
+  // 카톡·인스타 등 인앱브라우저는 navigator.share 가 없거나 엉뚱하게 동작한다 → 공유시트를 건너뛴다.
+  // (카카오 SDK 는 오히려 인앱브라우저에서 가장 잘 동작하므로 위 게이팅에는 쓰지 않는다)
   function isInAppBrowser(){
-    var ua=(navigator.userAgent||'');
-    return /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER|DaumApps|Snapchat|Band|; wv\)/i.test(ua);
+    return /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER|DaumApps|Band|; wv\)/i.test(navigator.userAgent||'');
   }
-  function kakaoReady(){ return !!(window.Kakao && Kakao.isInitialized && Kakao.isInitialized()); }
-  // 미리보기 열릴 때 카카오 이미지서버에 미리 업로드(전송 클릭 시 사용자 제스처 유지)
-  function kakaoPreUpload(){
-    if(!kakaoReady() || !curShare) return;
-    var snap=curShare; snap.kakaoUrl=null;
-    var file=new File([snap.blob], snap.name, {type:'image/png'});
-    Kakao.Share.uploadImage({file:[file]}).then(function(res){
-      if(curShare===snap){ snap.kakaoUrl=(res&&res.infos&&res.infos.original&&res.infos.original.url)||null; }
-    }).catch(function(){});
-  }
-  function kakaoSend(){
-    var msg=(curShare.text||'오로지교육에서 보내는 메시지입니다.');
-    var link={ mobileWebUrl:location.href, webUrl:location.href };
-    if(curShare.kakaoUrl){
-      // 이미지 카드까지 함께 전송 (이미지 업로드 완료된 경우)
-      Kakao.Share.sendDefault({
-        objectType:'feed',
-        content:{ title:'오로지교육 고객 메시지', description:msg.slice(0,190), imageUrl:curShare.kakaoUrl, link:link }
-      });
-    } else {
-      // 이미지 준비 전이어도 친구 선택창은 즉시 열고 메시지 텍스트로 전송
-      Kakao.Share.sendDefault({ objectType:'text', text:msg, link:link });
+
+  // ---------- 카톡 텍스트 바로 전송 (버튼 클릭 → 친구 선택창 즉시) ----------
+  // btn 클릭이라는 user gesture 안에서 sendDefault 를 동기 호출해야 팝업이 차단되지 않는다.
+  function sendText(msg){
+    if(!msg) return;
+    // (A) 200자 초과 → 잘린 메시지가 고객에게 가는 것이 최악이므로 전송을 막고 복사로 우회
+    if(msg.length>KAKAO_TEXT_MAX){
+      copyText(msg,function(){ toast(KAKAO_TEXT_MAX+'자 초과라 복사했어요! 카톡에 붙여넣어 보내주세요'); });
+      return;
     }
-    modalEl.classList.remove('show');
+    // (B) 카카오 → 친구(채팅) 선택창이 바로 열리고, 링크·버튼 없는 순수 텍스트 말풍선으로 전송
+    if(canUseKakao()){
+      try{ Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{} }); return; }catch(e){}
+    }
+    // (C) OS 공유시트 → 카톡 선택 (순수 텍스트, 길이 제한 없음)
+    if(navigator.share && !isInAppBrowser()){
+      navigator.share({text:msg}).catch(function(){ /* 사용자 취소 등 무시 */ });
+      return;
+    }
+    // (D) 최종 폴백: 클립보드 복사
+    copyText(msg,function(){ toast('메시지를 복사했어요! 카톡에 붙여넣어 보내주세요'); });
   }
+
   sendEl.onclick=function(){
     if(!curShare) return;
-    // 메시지 카드 이미지'만' 깔끔하게 전송 (카톡에 사진으로 첨부)
-    // ※ 카카오 SDK 바로보내기는 항상 링크+잘린 썸네일 카드로만 전송되어, 순수 이미지는 파일 공유로 보냄
-    var file=new File([curShare.blob], curShare.name, {type:'image/png'});
-    var canFiles = (navigator.canShare && navigator.canShare({files:[file]}));
-    if(navigator.share && canFiles){
-      navigator.share({files:[file]})
-        .then(function(){ modalEl.classList.remove('show'); })
-        .catch(function(){ /* 취소 등 무시 */ });
-    } else if(isInAppBrowser()){
-      toast('앱 안에서 열면 사진 전송이 막혀요. 우측 ⋮(또는 ⋯)메뉴 → "다른 브라우저로 열기" 후 다시 눌러주세요');
-    } else {
-      downImg(); toast('이미지를 저장했어요. 카톡에서 사진 첨부로 보내주세요');
+    var msg=curShare.text;
+
+    // (A) 200자 초과 → 잘린 메시지가 고객에게 가는 것이 최악이므로 카톡 전송을 막고 복사로 우회.
+    //     모달은 열어둔다. 빨간 카운터가 남아 있어야 멘트를 줄일 수 있다.
+    if(msg.length>KAKAO_TEXT_MAX){
+      showHint('카톡 직접 전송은 '+KAKAO_TEXT_MAX+'자까지예요. 멘트를 줄이시거나, 복사해서 붙여넣어 보내주세요.');
+      copyText(msg,function(){ toast('길어서 복사했어요! 카톡에 붙여넣어 보내주세요'); });
+      return;
     }
+
+    // (B) 카카오 SDK → 친구(채팅) 선택창이 바로 열린다.
+    //     link 를 비워야 "자세히 보기" 버튼 없이 순수 텍스트 말풍선으로 도착한다.
+    //     sendDefault 는 user gesture 안에서 동기 호출해야 팝업이 차단되지 않는다.
+    if(canUseKakao()){
+      try{
+        Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{} });
+        // 성공 콜백이 없어 전송 여부를 알 수 없다. 모달을 닫지 않고 복사 탈출구를 남긴다.
+        showHint('친구 선택창이 안 뜨면 팝업 차단을 확인하시고, 아래 [복사]로 붙여넣어 보내주세요.');
+        return;
+      }catch(e){
+        // 여기로 오는 것은 link:{} 거부 같은 동기 파라미터 오류뿐이다.
+        // 도메인 미등록 실패는 throw 되지 않으므로 위 isKakaoAllowedEnv() 로 미리 걸러야 한다.
+      }
+    }
+
+    // (C) OS 공유시트 → 카톡 선택. 순수 텍스트로 도착하고 길이 제한이 없다.
+    if(navigator.share && !isInAppBrowser()){
+      navigator.share({text:msg})
+        .then(function(){ modalEl.classList.remove('show'); })
+        .catch(function(){ /* 사용자 취소 등 무시 */ });
+      return;
+    }
+
+    // (D) 최종 폴백: 클립보드 복사
+    copyText(msg,function(){ toast('메시지를 복사했어요! 카톡에 붙여넣어 보내주세요'); });
+    modalEl.classList.remove('show');
   };
-  downEl.onclick=function(){ downImg(); };
-  function downImg(){ if(!curShare) return; var a=document.createElement('a'); a.href=curShare.url; a.download=curShare.name; a.click(); toast('이미지를 저장했어요'); }
+  // 복사 버튼
+  downEl.onclick=function(){ if(!curShare) return; copyText(curShare.text,function(){ toast('복사됐어요!'); }); };
   closeEl.onclick=function(){ modalEl.classList.remove('show'); };
   modalEl.onclick=function(e){ if(e.target===modalEl) modalEl.classList.remove('show'); };
 
