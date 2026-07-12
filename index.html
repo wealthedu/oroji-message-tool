@@ -329,14 +329,14 @@
 
   // 카테고리별 파스텔 색 (카드/태그) + 이미지 그라데이션/이모지
   var CAT_META = {
-    "생일":      {bg:"#fff3e6", tagbg:"#ffe2c2", tagfg:"#e07b1a", g1:"#ffe7c7", g2:"#ffcb9e", emo:"🎂"},
-    "명절":      {bg:"#fff0f1", tagbg:"#ffd6da", tagfg:"#e34e63", g1:"#ffe0e6", g2:"#ffc0cf", emo:"🌕"},
-    "갱신 안내": {bg:"#eef7ff", tagbg:"#cfe6ff", tagfg:"#2f86d6", g1:"#dcefff", g2:"#bcddff", emo:"🔔"},
-    "안부":      {bg:"#eafaf0", tagbg:"#c6efd6", tagfg:"#1f9d61", g1:"#d8f7e5", g2:"#b6ecca", emo:"🍀"},
-    "계약 축하": {bg:"#fff6d9", tagbg:"#ffe7a0", tagfg:"#cf9a12", g1:"#fff2c2", g2:"#ffe092", emo:"🎉"},
-    "소개 요청": {bg:"#fdeeff", tagbg:"#f4d4fb", tagfg:"#b455c9", g1:"#f6ddff", g2:"#e6c2ff", emo:"🤝"}
+    "생일":      {bg:"#fff3e6", tagbg:"#ffe2c2", tagfg:"#e07b1a", g1:"#ffe7c7", g2:"#ffcb9e", d1:"#f6a83d", d2:"#df7a17", emo:"🎂"},
+    "명절":      {bg:"#fff0f1", tagbg:"#ffd6da", tagfg:"#e34e63", g1:"#ffe0e6", g2:"#ffc0cf", d1:"#f06b7f", d2:"#d83f56", emo:"🌕"},
+    "갱신 안내": {bg:"#eef7ff", tagbg:"#cfe6ff", tagfg:"#2f86d6", g1:"#dcefff", g2:"#bcddff", d1:"#5aa0e4", d2:"#2670c2", emo:"🔔"},
+    "안부":      {bg:"#eafaf0", tagbg:"#c6efd6", tagfg:"#1f9d61", g1:"#d8f7e5", g2:"#b6ecca", d1:"#3cb87b", d2:"#178a51", emo:"🍀"},
+    "계약 축하": {bg:"#fff6d9", tagbg:"#ffe7a0", tagfg:"#cf9a12", g1:"#fff2c2", g2:"#ffe092", d1:"#e6b52e", d2:"#c48c0d", emo:"🎉"},
+    "소개 요청": {bg:"#fdeeff", tagbg:"#f4d4fb", tagfg:"#b455c9", g1:"#f6ddff", g2:"#e6c2ff", d1:"#c46fd6", d2:"#a344ba", emo:"🤝"}
   };
-  function meta(cat){ return CAT_META[cat] || {bg:"#f3eeff",tagbg:"#e0d4ff",tagfg:"#7a5fe0",g1:"#ece2ff",g2:"#d4c2ff",emo:"💌"}; }
+  function meta(cat){ return CAT_META[cat] || {bg:"#f3eeff",tagbg:"#e0d4ff",tagfg:"#7a5fe0",g1:"#ece2ff",g2:"#d4c2ff",d1:"#5b3aa6",d2:"#38215c",emo:"💌"}; }
   // 카카오톡 말풍선 아이콘(모달 노란버튼용 · 진한 단색)
   var KAKAO_SVG='<svg viewBox="0 0 36 33" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 0C8.06 0 0 6.34 0 14.16c0 5.05 3.36 9.48 8.42 11.99-.27.96-1.7 5.9-1.76 6.29 0 0-.03.29.15.4.18.11.4.02.4.02.52-.07 6.04-3.96 7-4.64.58.08 1.18.12 1.79.12 9.94 0 18-6.34 18-14.16C36 6.34 27.94 0 18 0z" fill="#3A1D1D"/></svg>';
   // 카카오톡 로고(노란 라운드 + 말풍선) · 카드 버튼용
@@ -470,7 +470,7 @@
       if(state.cat==='⭐ 즐겨찾기'){ render(); return; }
       this.classList.toggle('on',nowFav); this.textContent=nowFav?'★':'☆';
       if(nowFav){ this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop'); } };
-    card.querySelector('.btn-main').onclick=function(){ sendText(fill(t.text)); };
+    card.querySelector('.btn-main').onclick=function(){ sendText(fill(t.text), t.cat); };
     card.querySelector('.cp').onclick=function(){ var b=this; copyText(fill(t.text),function(){ b.classList.add('done'); b.textContent='복사됨 ✓'; toast('복사됐어요!'); setTimeout(function(){ b.classList.remove('done'); b.textContent='복사'; },1400); }); };
     card.querySelector('.ed').onclick=function(){ editingId=t.id; render(); };
     return card;
@@ -553,12 +553,15 @@
   // 카카오 공유 API 는 링크가 필수다. 그 링크(자세히 보기)를 툴이 아니라
   // "메시지를 이미지 카드로 보여주는 페이지(m.html)"로 돌려서, 고객이 눌러도 툴은 노출되지 않게 한다.
   // 본문(text)은 그대로 텍스트 말풍선으로 전달된다. 카카오 text 템플릿은 200자 제한.
-  function cardUrl(msg){
+  function cardUrl(msg, cat){
     var dir=(location.origin+location.pathname).replace(/[^\/]*$/,''); // 현재 폴더 (…/oroji-message-tool/)
-    var enc; try{ enc=btoa(unescape(encodeURIComponent(msg))); }catch(e){ enc=encodeURIComponent(msg); }
+    var m=meta(cat);
+    // m.html 이 카테고리 색으로 카드를 그리도록 배경 그라데이션(a,b)·따옴표 색(q)을 같이 실어 보낸다.
+    var payload=JSON.stringify({ t:msg, a:m.d1, b:m.d2, q:m.g1 });
+    var enc; try{ enc=btoa(unescape(encodeURIComponent(payload))); }catch(e){ enc=encodeURIComponent(msg); }
     return dir+'m.html#'+enc;
   }
-  function sendText(msg){
+  function sendText(msg, cat){
     if(!msg) return;
     // (A) 200자 초과 → 카카오 text 한도 초과. 잘려 나가면 최악이라 복사로 우회.
     if(msg.length>KAKAO_TEXT_MAX){
@@ -568,7 +571,7 @@
     // (B) 카카오 → 친구(채팅) 선택창 즉시. 링크는 m.html(메시지 이미지 카드)로 연결.
     if(canUseKakao()){
       try{
-        var url=cardUrl(msg);
+        var url=cardUrl(msg, cat);
         Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{ webUrl:url, mobileWebUrl:url } });
         return;
       }catch(e){}

@@ -25,14 +25,26 @@
   </div>
 <script>
 (function(){
-  // ---- URL(해시)에서 메시지 복원 : index.html cardUrl() 과 짝 ----
-  function decodeMsg(){
+  // ---- URL(해시)에서 메시지·색 복원 : index.html cardUrl() 과 짝 ----
+  //   새 형식: base64( JSON{t:본문, a:배경위, b:배경아래, q:따옴표색} )
+  //   옛 형식(색 없이 본문만)도 그대로 읽는다.
+  function decodePayload(){
     var h = location.hash ? location.hash.slice(1) : '';
-    if(!h) return '';
-    try{ return decodeURIComponent(escape(atob(h))); }        // base64(UTF-8)
-    catch(e){ try{ return decodeURIComponent(h); }catch(e2){ return h; } }
+    if(!h) return {t:''};
+    var raw;
+    try{ raw = decodeURIComponent(escape(atob(h))); }        // base64(UTF-8)
+    catch(e){ try{ raw = decodeURIComponent(h); }catch(e2){ raw = h; } }
+    try{
+      var o = JSON.parse(raw);
+      if(o && typeof o==='object' && 't' in o) return o;
+    }catch(e){}
+    return { t: raw };
   }
-  var msg = decodeMsg();
+  var data = decodePayload();
+  var msg = data.t || '';
+  var gTop = data.a || '#5b3aa6';   // 배경 그라데이션 위 (카테고리색 · 기본 딥퍼플)
+  var gBot = data.b || '#38215c';   // 배경 그라데이션 아래
+  var qColor = data.q || '#e6dcff'; // 따옴표 장식색
 
   var canvas = document.getElementById('c');
   var ctx = canvas.getContext('2d');
@@ -40,23 +52,34 @@
 
   // ---- 레이아웃(논리 px) ----
   var W=520, padOut=24, padIn=38;
-  var quoteH=44, fontSize=27, lineH=43, gapFooter=22, footerLH=20;
+  var quoteH=44, fontSize=27, lineH=43;
   var bodyFont='600 '+fontSize+'px -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
 
+  // 어절(띄어쓰기) 단위로 줄을 내려 읽힘을 자연스럽게. 한 어절이 한 줄보다 길면 그때만 글자 단위로 쪼갠다.
   function wrap(text,maxW){
     ctx.font=bodyFont;
     var out=[];
     String(text).split('\n').forEach(function(p){
       if(p===''){ out.push(''); return; }
-      var line='';
-      for(var i=0;i<p.length;i++){
-        var t=line+p[i];
-        if(ctx.measureText(t).width>maxW && line!==''){ out.push(line); line=p[i]; }
-        else line=t;
+      var words=p.split(' '), line='';
+      for(var i=0;i<words.length;i++){
+        var w=words[i];
+        var test = line==='' ? w : line+' '+w;
+        if(ctx.measureText(test).width<=maxW){ line=test; continue; }
+        if(line!==''){ out.push(line); line=''; }
+        if(ctx.measureText(w).width>maxW){        // 어절 자체가 너무 길다 → 글자 단위 폴백
+          var cur='';
+          for(var j=0;j<w.length;j++){
+            var t2=cur+w[j];
+            if(ctx.measureText(t2).width>maxW && cur!==''){ out.push(cur); cur=w[j]; }
+            else cur=t2;
+          }
+          line=cur;
+        }else{ line=w; }
       }
-      out.push(line);
+      if(line!=='') out.push(line);
     });
-    return out;
+    return out.length?out:[''];
   }
   function roundRect(x,y,w,h,r){
     ctx.beginPath();
@@ -71,16 +94,16 @@
   var maxTextW = W - padOut*2 - padIn*2;
   var lines = wrap(msg, maxTextW);
   var bodyH = Math.max(lineH, lines.length*lineH);
-  var cardH = padIn + quoteH + bodyH + gapFooter + footerLH + padIn;
+  var cardH = padIn + quoteH + bodyH + padIn;
   var H = padOut*2 + cardH;
 
   // ---- 캔버스 (고해상도) ----
   canvas.width = W*DPR; canvas.height = H*DPR;
   ctx.scale(DPR,DPR);
 
-  // 배경 : 딥퍼플 그라데이션
+  // 배경 : 카테고리색 그라데이션
   var g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#5b3aa6'); g.addColorStop(1,'#38215c');
+  g.addColorStop(0,gTop); g.addColorStop(1,gBot);
   ctx.fillStyle=g; roundRect(0,0,W,H,30); ctx.fill();
 
   // 흰 카드
@@ -90,8 +113,8 @@
   var cx = padOut+padIn;
   var top = padOut+padIn;
 
-  // 따옴표 장식
-  ctx.fillStyle='#e6dcff';
+  // 따옴표 장식 (카테고리색 연한 톤)
+  ctx.fillStyle=qColor;
   ctx.font='800 66px Georgia, "Times New Roman", serif';
   ctx.textBaseline='top';
   ctx.fillText('“', cx-6, top-20);
@@ -102,12 +125,6 @@
   ctx.textBaseline='top';
   var ty = top + quoteH;
   for(var i=0;i<lines.length;i++){ ctx.fillText(lines[i], cx, ty+i*lineH); }
-
-  // 푸터(연한 브랜드)
-  ctx.fillStyle='#b3a4d8';
-  ctx.font='600 15px -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
-  ctx.textBaseline='top';
-  ctx.fillText('오로지교육', cx, ty + bodyH + gapFooter);
 })();
 </script>
 </body>
