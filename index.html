@@ -563,24 +563,14 @@
   }
   function sendText(msg, cat){
     if(!msg) return;
-    // (A) 200자 초과 → 카카오 text 한도 초과. 잘려 나가면 최악이라 복사로 우회.
-    if(msg.length>KAKAO_TEXT_MAX){
-      copyText(msg,function(){ toast(KAKAO_TEXT_MAX+'자 초과라 복사했어요! 카톡에 붙여넣어 보내주세요'); });
-      return;
-    }
-    // (B) 카카오 → 친구(채팅) 선택창 즉시. link 를 비워 "자세히 보기" 버튼 없이 순수 텍스트 말풍선으로 전송.
-    if(canUseKakao()){
-      try{
-        Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{} });
-        return;
-      }catch(e){}
-    }
-    // (C) 폴백: 모바일 OS 공유시트 (순수 텍스트)
-    if(isMobile() && navigator.share && !isInAppBrowser()){
+    // 순수 텍스트만 보낸다. 카카오 공유 템플릿(sendDefault)은 "자세히 보기" 버튼·링크가 필수라
+    // 버튼을 없앨 수 없다 → 대신 OS 공유시트로 카톡에 순수 텍스트를 넘긴다(버튼·링크·앱라벨·길이제한 전부 없음).
+    // (A) OS 공유시트 → 카톡 선택 → 대화방 선택 → 순수 텍스트 전송
+    if(navigator.share && !isInAppBrowser()){
       navigator.share({text:msg}).catch(function(){ /* 사용자 취소 등 무시 */ });
       return;
     }
-    // (D) 최종 폴백: 클립보드 복사
+    // (B) 폴백(PC·인앱브라우저 등 공유 API 미지원): 클립보드 복사
     copyText(msg,function(){ toast('메시지를 복사했어요! 카톡 대화창에 붙여넣기 하세요'); });
   }
 
