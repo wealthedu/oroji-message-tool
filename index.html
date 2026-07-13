@@ -568,11 +568,10 @@
       copyText(msg,function(){ toast(KAKAO_TEXT_MAX+'자 초과라 복사했어요! 카톡에 붙여넣어 보내주세요'); });
       return;
     }
-    // (B) 카카오 → 친구(채팅) 선택창 즉시. 링크는 m.html(메시지 이미지 카드)로 연결.
+    // (B) 카카오 → 친구(채팅) 선택창 즉시. link 를 비워 "자세히 보기" 버튼 없이 순수 텍스트 말풍선으로 전송.
     if(canUseKakao()){
       try{
-        var url=cardUrl(msg, cat);
-        Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{ webUrl:url, mobileWebUrl:url } });
+        Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{} });
         return;
       }catch(e){}
     }
