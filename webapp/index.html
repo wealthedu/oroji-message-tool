@@ -303,15 +303,10 @@
   try{ if(window.Kakao && KAKAO_JS_KEY && !Kakao.isInitialized()){ Kakao.init(KAKAO_JS_KEY); } }catch(e){}
 
   // ★ 카카오 개발자센터 > 앱 > 플랫폼 > Web > 사이트 도메인 에 등록한 host 와 정확히 일치시킬 것.
-  //   여기 없는 host 에서는 친구 선택창을 아예 시도하지 않고 공유시트/복사로 폴백한다.
   var ALLOWED_HOSTS = [ "wondrous-dragon-56a8f7.netlify.app", "wealthedu.github.io" ];
 
-  // 카카오 텍스트 템플릿 본문 상한. 초과분은 잘려서 전송되므로 넘기면 전송을 막고 복사한다.
-  var KAKAO_TEXT_MAX = 200;
-
-  // 카톡 말풍선의 버튼을 누르면 툴 대신 메시지 이미지 카드(m.html)가 열린다. webapp/ 기준 상위 폴더에 있다.
-  var CARD_PAGE = '../m.html';
-  var KAKAO_BUTTON = '메시지 카드 보기';
+  // 버튼 없는 피드 A형 템플릿. 설명에 ${message}를 지정한 뒤 ID를 입력한다.
+  var TEXT_ONLY_TEMPLATE_ID = 138605;
 
   // ===================== 멘트 데이터 =====================
   var OROJI_TEMPLATES = [
@@ -570,7 +565,7 @@
       if(nowFav){ this.classList.remove('pop'); void this.offsetWidth; this.classList.add('pop'); }
       renderNav();
     };
-    card.querySelector('.btn-main').onclick=function(){ sendText(fill(t.text), t.cat); };
+    card.querySelector('.btn-main').onclick=function(){ sendTextOnly(fill(t.text)); };
     card.querySelector('.cp').onclick=function(){ var b=this; copyText(fill(t.text),function(){ b.classList.add('done'); b.textContent='복사됨 ✓'; toast('복사됐어요!'); setTimeout(function(){ b.classList.remove('done'); b.textContent='복사'; },1400); }); };
     card.querySelector('.ed').onclick=function(){ editingId=t.id; if(state.cat===ALL && !state.q.trim()) state.cat=t.cat; render(); };
     return card;
@@ -631,7 +626,6 @@
   // ---------- 카톡 보내기 (카카오 친구 선택창) ----------
   function kakaoReady(){ return !!(window.Kakao && Kakao.isInitialized && Kakao.isInitialized() && Kakao.Share); }
   // 카카오는 개발자센터에 등록된 도메인에서만 친구 선택창을 열어준다. file:// 은 항상 거부된다.
-  // 미등록 host 에서 sendDefault 를 부르면 팝업 안에서 조용히 실패하므로, 아예 시도하지 않는 편이 안전하다.
   function normHost(s){ return String(s).trim().toLowerCase().replace(/^https?:\/\//,'').replace(/\/.*$/,''); }
   function isKakaoAllowedEnv(){
     var h=(location.hostname||'').toLowerCase();
@@ -641,45 +635,16 @@
     return false;
   }
   function canUseKakao(){ return kakaoReady() && isKakaoAllowedEnv(); }
-  // 카톡·인스타 등 인앱브라우저는 navigator.share 가 없거나 엉뚱하게 동작한다 → 폴백에서 공유시트를 건너뛴다.
-  function isInAppBrowser(){
-    return /KAKAOTALK|Instagram|FBAN|FBAV|FB_IAB|Line\/|NAVER|DaumApps|Band|; wv\)/i.test(navigator.userAgent||'');
-  }
-  // 카카오 텍스트 템플릿은 링크가 필수다. 그 링크를 툴이 아니라 메시지 이미지 카드(m.html)로 돌려서,
-  // 고객이 버튼을 눌러도 툴 화면은 노출되지 않게 한다.
-  function cardUrl(msg, cat){
-    var base=new URL(CARD_PAGE, location.href).href.replace(/#.*$/,'');
-    var m=meta(cat);
-    var payload=JSON.stringify({ t:msg, a:m.d1, b:m.d2, q:m.g1 });
-    var enc; try{ enc=btoa(unescape(encodeURIComponent(payload))); }catch(e){ enc=encodeURIComponent(msg); }
-    return base+'#'+enc;
-  }
-  function sendText(msg, cat){
-    if(!msg) return;
-    // (A) 200자 초과 → 잘린 메시지가 고객에게 가는 것이 최악이므로 카톡 전송을 막고 복사로 우회
-    if(msg.length>KAKAO_TEXT_MAX){
-      copyText(msg,function(){ toast('카톡 직접 전송은 '+KAKAO_TEXT_MAX+'자까지예요. 복사했으니 붙여넣어 보내주세요'); });
+  function sendTextOnly(msg){
+    if(!canUseKakao()){
+      toast('카카오톡 공유를 열 수 없어요. 복사 버튼을 이용해 주세요.');
       return;
     }
-    // (B) 카카오 SDK → 친구(채팅) 선택창이 바로 열린다.
-    //     sendDefault 는 user gesture(클릭) 안에서 동기 호출해야 팝업이 차단되지 않는다.
-    if(canUseKakao()){
-      try{
-        var url=cardUrl(msg, cat);
-        Kakao.Share.sendDefault({ objectType:'text', text:msg, link:{ webUrl:url, mobileWebUrl:url }, buttonTitle:KAKAO_BUTTON });
-        return;
-      }catch(e){ /* 파라미터 오류 등 → 아래 폴백 */ }
+    try{
+      Kakao.Share.sendCustom({templateId:TEXT_ONLY_TEMPLATE_ID, templateArgs:{message:msg}});
+    }catch(e){
+      toast('카카오톡 공유를 열 수 없어요. 잠시 후 다시 시도해 주세요.');
     }
-    // (C) 카카오를 못 쓰는 환경(미등록 주소·file:// 등) → OS 공유하기
-    if(navigator.share && !isInAppBrowser()){
-      navigator.share({text:msg}).catch(function(err){
-        if(err && err.name==='AbortError') return;
-        copyText(msg,function(){ toast('메시지를 복사했어요! 카톡 대화창에 붙여넣기 하세요'); });
-      });
-      return;
-    }
-    // (D) 최종 폴백: 클립보드 복사
-    copyText(msg,function(){ toast('메시지를 복사했어요! 카톡 대화창에 붙여넣기 하세요'); });
   }
 
   // ---------- 복사 ----------
@@ -688,7 +653,12 @@
     else legacy(str,cb);
   }
   function legacy(str,cb){ var ta=document.createElement('textarea'); ta.value=str; ta.style.position='fixed'; ta.style.top='-9999px';
-    document.body.appendChild(ta); ta.focus(); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); cb&&cb(); }
+    document.body.appendChild(ta); ta.focus(); ta.select(); var copied=false;
+    try{copied=document.execCommand('copy');}catch(e){}
+    document.body.removeChild(ta);
+    if(copied){ if(cb) cb(); }
+    else window.prompt('아래 문구를 복사해 카톡 대화창에 붙여넣어 주세요.',str);
+   }
 
   var tT;
   function toast(msg){ toastEl.textContent=msg||'완료'; toastEl.classList.add('show'); clearTimeout(tT); tT=setTimeout(function(){ toastEl.classList.remove('show'); },1800); }
