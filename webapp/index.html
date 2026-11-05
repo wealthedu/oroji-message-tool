@@ -140,6 +140,10 @@
   .home .grid::-webkit-scrollbar{display:none}
   .home .grid .card{flex:0 0 calc((100% - 32px) / 3);scroll-snap-align:start}
   @media (max-width:960px){ .home .grid .card{flex-basis:calc((100% - 16px) / 2)} }
+  .dots{display:flex;justify-content:center;gap:6px;margin-top:2px}
+  .dot{width:7px;height:7px;padding:0;border:0;border-radius:999px;background:#d9d6e6;transition:width .25s,background .25s}
+  .dot:hover{background:var(--violet-light)}
+  .dot.on{width:22px;background:var(--violet)}
   .page-head{margin-bottom:16px}
   .page-head .no{font-size:12.5px;font-weight:800;color:var(--violet)}
   .page-head h3{font-size:26px;font-weight:800;letter-spacing:-.8px}
@@ -238,7 +242,7 @@
     /* 모바일 홈: 이전과 같은 가로 스크롤 (화살표 없음, 모바일 전용 작업은 따로) */
     .home .grid{gap:12px;margin:0 -14px;padding:4px 14px 14px}
     .home .grid .card{flex-basis:82%}
-    .shead .arr{display:none}
+    .shead .arr,.dots{display:none!important}
     .grid{grid-template-columns:1fr}
   }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
@@ -540,24 +544,40 @@
       var sec=document.createElement('section'); sec.className='section';
       sec.innerHTML='<div class="shead"><div><div class="no">'+pad(i+1)+'</div><h3>'+meta(cat).emo+' '+esc(cat)+'</h3></div>'+
         '<div class="ctrl"><button class="arr prev" aria-label="이전 멘트">'+ARR_L+'</button><button class="arr next" aria-label="다음 멘트">'+ARR_R+'</button>'+
-        '<button class="more">전체보기 '+all.length+' ›</button></div></div><div class="grid"></div>';
+        '<button class="more">더보기 ›</button></div></div><div class="grid"></div><div class="dots" aria-hidden="true"></div>';
       sec.querySelector('.more').onclick=function(){ go(cat); };
       var row=sec.querySelector('.grid');
       (isMobile()?all.slice(0,6):all).forEach(function(t){ row.appendChild(viewCard(t)); });
       gridEl.appendChild(sec);
-      bindSlider(row, sec.querySelector('.prev'), sec.querySelector('.next'));
+      bindSlider(row, sec.querySelector('.prev'), sec.querySelector('.next'), sec.querySelector('.dots'));
     });
     staggerIn();
   }
   var ARR_L='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
   var ARR_R='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
   // 화살표 한 번 = 보이는 카드 수만큼 이동. 양 끝에서는 해당 화살표를 흐리게 만든다.
-  function bindSlider(row, prev, next){
-    function step(){ var c=row.querySelector('.card'); if(!c) return row.clientWidth;
+  // 점 표시: 한 화면(보이는 카드 수)마다 점 하나. 지금 보는 화면의 점이 길어지고, 점을 눌러 바로 이동할 수 있다.
+  function bindSlider(row, prev, next, dots){
+    function perView(){ var c=row.querySelector('.card'); if(!c) return 1;
       var gap=parseFloat(getComputedStyle(row).columnGap)||16, w=c.getBoundingClientRect().width+gap;
-      return Math.max(1, Math.floor((row.clientWidth+gap)/w))*w; }
+      return Math.max(1, Math.floor((row.clientWidth+gap)/w)); }
+    function step(){ var c=row.querySelector('.card'); if(!c) return row.clientWidth;
+      var gap=parseFloat(getComputedStyle(row).columnGap)||16;
+      return perView()*(c.getBoundingClientRect().width+gap); }
     function sync(){ var max=row.scrollWidth-row.clientWidth-2;
-      prev.disabled=row.scrollLeft<=2; next.disabled=row.scrollLeft>=max; }
+      prev.disabled=row.scrollLeft<=2; next.disabled=row.scrollLeft>=max;
+      if(!dots) return;
+      var pages=Math.ceil(row.children.length/perView());
+      if(dots.children.length!==pages){
+        dots.innerHTML='';
+        for(var i=0;i<pages;i++){ var d=document.createElement('button'); d.className='dot'; d.tabIndex=-1;
+          (function(i){ d.onclick=function(){ var m=row.scrollWidth-row.clientWidth; row.scrollTo({left:Math.min(m,i*step()),behavior:'smooth'}); }; })(i);
+          dots.appendChild(d); }
+      }
+      dots.style.display = pages>1 ? '' : 'none';
+      var cur = row.scrollLeft>=max ? pages-1 : Math.round(row.scrollLeft/step());
+      for(var j=0;j<dots.children.length;j++) dots.children[j].classList.toggle('on', j===cur);
+    }
     function go(dir){ var max=row.scrollWidth-row.clientWidth;
       row.scrollTo({left:Math.max(0,Math.min(max,row.scrollLeft+dir*step())),behavior:'smooth'}); }
     prev.onclick=function(){ go(-1); };
