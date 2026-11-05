@@ -128,6 +128,18 @@
   .shead .more{border:1px solid var(--line);background:var(--card);color:var(--ink-2);font-size:13px;font-weight:700;
     padding:8px 14px;border-radius:999px;white-space:nowrap;transition:.15s}
   .shead .more:hover{border-color:var(--violet-light);color:var(--violet)}
+  .shead .ctrl{display:flex;align-items:center;gap:6px}
+  .arr{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink-2);
+    display:grid;place-items:center;transition:.15s;box-shadow:0 2px 6px rgba(26,26,46,.04)}
+  .arr svg{width:16px;height:16px}
+  .arr:hover:not(:disabled){border-color:var(--violet-light);color:var(--violet);background:#faf7ff}
+  .arr:disabled{opacity:.35;cursor:default}
+  /* 홈 화면: 카테고리별 가로 슬라이드 (PC 3장 · 태블릿 2장 · 모바일 1장+) */
+  .home .grid{display:flex;overflow-x:auto;gap:16px;padding:6px 2px 16px;margin:-6px -2px 0;scroll-snap-type:x mandatory;
+    scroll-behavior:smooth;scrollbar-width:none;-ms-overflow-style:none}
+  .home .grid::-webkit-scrollbar{display:none}
+  .home .grid .card{flex:0 0 calc((100% - 32px) / 3);scroll-snap-align:start}
+  @media (max-width:960px){ .home .grid .card{flex-basis:calc((100% - 16px) / 2)} }
   .page-head{margin-bottom:16px}
   .page-head .no{font-size:12.5px;font-weight:800;color:var(--violet)}
   .page-head h3{font-size:26px;font-weight:800;letter-spacing:-.8px}
@@ -223,10 +235,10 @@
     .toolbar .count{display:none}
     .search kbd{display:none}
     .shead h3{font-size:19px}
-    /* 홈 화면은 카테고리별 가로 스크롤 */
-    .home .grid{display:flex;overflow-x:auto;gap:12px;margin:0 -14px;padding:4px 14px 14px;scroll-snap-type:x mandatory;scrollbar-width:none}
-    .home .grid::-webkit-scrollbar{display:none}
-    .home .grid .card{flex:0 0 82%;scroll-snap-align:start}
+    /* 모바일 홈: 이전과 같은 가로 스크롤 (화살표 없음, 모바일 전용 작업은 따로) */
+    .home .grid{gap:12px;margin:0 -14px;padding:4px 14px 14px}
+    .home .grid .card{flex-basis:82%}
+    .shead .arr{display:none}
     .grid{grid-template-columns:1fr}
   }
   @media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
@@ -490,7 +502,7 @@
 
   // ---------- 렌더 ----------
   var mobileMQ = window.matchMedia ? window.matchMedia('(max-width:640px)') : null;
-  function homeLimit(){ return (mobileMQ && mobileMQ.matches) ? 6 : 3; } // PC는 3개씩 그리드, 모바일은 6개 가로 스크롤
+  function isMobile(){ return !!(mobileMQ && mobileMQ.matches); } // 모바일은 6장, PC는 전체를 화살표로 넘겨 본다
   function pad(n){ return (n<10?'0':'')+n; }
 
   function render(){
@@ -527,14 +539,37 @@
       if(!all.length) return;
       var sec=document.createElement('section'); sec.className='section';
       sec.innerHTML='<div class="shead"><div><div class="no">'+pad(i+1)+'</div><h3>'+meta(cat).emo+' '+esc(cat)+'</h3></div>'+
-        '<button class="more">전체보기 '+all.length+' ›</button></div><div class="grid"></div>';
+        '<div class="ctrl"><button class="arr prev" aria-label="이전 멘트">'+ARR_L+'</button><button class="arr next" aria-label="다음 멘트">'+ARR_R+'</button>'+
+        '<button class="more">전체보기 '+all.length+' ›</button></div></div><div class="grid"></div>';
       sec.querySelector('.more').onclick=function(){ go(cat); };
       var row=sec.querySelector('.grid');
-      all.slice(0,homeLimit()).forEach(function(t){ row.appendChild(viewCard(t)); });
+      (isMobile()?all.slice(0,6):all).forEach(function(t){ row.appendChild(viewCard(t)); });
       gridEl.appendChild(sec);
+      bindSlider(row, sec.querySelector('.prev'), sec.querySelector('.next'));
     });
     staggerIn();
   }
+  var ARR_L='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>';
+  var ARR_R='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>';
+  // 화살표 한 번 = 보이는 카드 수만큼 이동. 양 끝에서는 해당 화살표를 흐리게 만든다.
+  function bindSlider(row, prev, next){
+    function step(){ var c=row.querySelector('.card'); if(!c) return row.clientWidth;
+      var gap=parseFloat(getComputedStyle(row).columnGap)||16, w=c.getBoundingClientRect().width+gap;
+      return Math.max(1, Math.floor((row.clientWidth+gap)/w))*w; }
+    function sync(){ var max=row.scrollWidth-row.clientWidth-2;
+      prev.disabled=row.scrollLeft<=2; next.disabled=row.scrollLeft>=max; }
+    function go(dir){ var max=row.scrollWidth-row.clientWidth;
+      row.scrollTo({left:Math.max(0,Math.min(max,row.scrollLeft+dir*step())),behavior:'smooth'}); }
+    prev.onclick=function(){ go(-1); };
+    next.onclick=function(){ go(1); };
+    row.addEventListener('scroll',function(){ clearTimeout(row._t); row._t=setTimeout(sync,60); },{passive:true});
+    setTimeout(sync,0);
+  }
+  window.addEventListener('resize',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.home .section'),function(sec){
+      var row=sec.querySelector('.grid'); if(row) row.dispatchEvent(new Event('scroll'));
+    });
+  });
   function staggerIn(){ if(!animNav) return; animNav=false;
     var cards=gridEl.querySelectorAll('.card');
     for(var i=0;i<cards.length;i++){ cards[i].style.animationDelay=(Math.min(i,12)*0.03)+'s'; cards[i].classList.add('anim'); }
@@ -673,6 +708,7 @@
     if(e.key==='/' && !/INPUT|TEXTAREA|SELECT/.test(tag)){ e.preventDefault(); searchEl.focus(); }
     if(e.key==='Escape' && document.activeElement===searchEl && searchEl.value){ searchEl.value=''; state.q=''; render(); }
   });
+
   if(mobileMQ){ var onMQ=function(){ if(state.cat===ALL && !state.q.trim() && !editingId) render(); };
     if(mobileMQ.addEventListener) mobileMQ.addEventListener('change',onMQ); else if(mobileMQ.addListener) mobileMQ.addListener(onMQ); }
 
